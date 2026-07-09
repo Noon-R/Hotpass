@@ -1,0 +1,276 @@
+<UserControl x:Class="Hotpass.App.Views.SingleView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ctl="clr-namespace:Hotpass.App.Controls">
+
+    <StackPanel>
+        <!-- vhead -->
+        <StackPanel Orientation="Horizontal" Margin="0,26,0,4">
+            <TextBlock Text="{Binding Viewed.FileName}" FontFamily="{StaticResource DisplayFont}"
+                       FontSize="17" FontWeight="SemiBold" Foreground="{StaticResource InkBrush}"/>
+            <TextBlock Text="{Binding Viewed.HeadSubText}" Style="{StaticResource LabelText}"
+                       FontSize="12.5" Margin="11,3,0,0"/>
+        </StackPanel>
+
+        <!-- hero -->
+        <Grid Margin="0,14,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <StackPanel>
+                <TextBlock Text="FRAME GPU TIME" Style="{StaticResource LabelText}" Margin="0,0,0,8"/>
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Style="{StaticResource NumText}" FontSize="50" FontWeight="Light" VerticalAlignment="Bottom">
+                        <Run Text="{Binding Viewed.TotalText, Mode=OneWay}"/><Run Text=" ms" FontSize="18" Foreground="{StaticResource MutedBrush}"/>
+                    </TextBlock>
+                    <!-- 判定: 塗りではなく枠線のみ(Instrument) -->
+                    <Border VerticalAlignment="Center" Margin="18,12,0,0" Padding="10,4" Background="Transparent" BorderThickness="1">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="BorderBrush" Value="{StaticResource GoodBrush}"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Viewed.IsOverBudget}" Value="True">
+                                        <Setter Property="BorderBrush" Value="{StaticResource BadBrush}"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <TextBlock Text="{Binding Viewed.BudgetPillText}" FontSize="11" FontWeight="SemiBold">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Foreground" Value="{StaticResource GoodBrush}"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Viewed.IsOverBudget}" Value="True">
+                                            <Setter Property="Foreground" Value="{StaticResource BadBrush}"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </Border>
+                </StackPanel>
+            </StackPanel>
+            <StackPanel Grid.Column="1" VerticalAlignment="Bottom" HorizontalAlignment="Right">
+                <TextBlock HorizontalAlignment="Right" Style="{StaticResource LabelText}" FontSize="12.5">
+                    <Run Text="target "/><Run Text="16.6 ms" FontWeight="Bold" Foreground="{StaticResource InkBrush}"/><Run Text=" · 60 fps"/>
+                </TextBlock>
+                <TextBlock Text="{Binding Viewed.PassCountText}" HorizontalAlignment="Right"
+                           Style="{StaticResource LabelText}" FontSize="12.5"/>
+            </StackPanel>
+        </Grid>
+
+        <!-- budget bar -->
+        <ctl:BudgetBarControl Segments="{Binding Viewed.BarSegments}" Margin="0,20,0,0"/>
+
+        <!-- legend -->
+        <ItemsControl ItemsSource="{Binding Viewed.UsedCategories}" Margin="0,14,0,0">
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,18,0">
+                        <Border Width="10" Height="10" Background="{Binding Brush}" VerticalAlignment="Center"/>
+                        <TextBlock Text="{Binding Label}" FontSize="12" Foreground="{StaticResource Ink2Brush}" Margin="7,0,0,0"/>
+                    </StackPanel>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+
+        <!-- 計器クラスタ -->
+        <Border BorderBrush="{StaticResource HairBrush}" BorderThickness="0,1,0,1" Margin="0,26,0,0" Padding="0,16">
+            <UniformGrid Columns="4">
+                <StackPanel Margin="0,0,22,0">
+                    <TextBlock Text="DOMINANT LIMITER" Style="{StaticResource LabelText}" Margin="0,0,0,8"/>
+                    <StackPanel Orientation="Horizontal">
+                        <Border Width="10" Height="10" Background="{Binding Viewed.DominantMeta.Brush}" VerticalAlignment="Center"/>
+                        <TextBlock Text="{Binding Viewed.DominantMeta.Label}" FontSize="19" Foreground="{StaticResource InkBrush}" Margin="9,0,0,0"/>
+                    </StackPanel>
+                    <TextBlock Text="{Binding Viewed.DominantSub}" Style="{StaticResource SubText}" Margin="0,5,0,0"/>
+                </StackPanel>
+                <StackPanel Margin="0,0,22,0">
+                    <TextBlock Text="WORST PASS" Style="{StaticResource LabelText}" Margin="0,0,0,8"/>
+                    <TextBlock Text="{Binding Viewed.WorstName}" FontSize="19" Foreground="{StaticResource InkBrush}"/>
+                    <TextBlock Text="{Binding Viewed.WorstSub}" Style="{StaticResource SubText}" Margin="0,5,0,0"/>
+                </StackPanel>
+                <StackPanel Margin="0,0,22,0">
+                    <TextBlock Text="ASYNC OVERLAP" Style="{StaticResource LabelText}" Margin="0,0,0,8"/>
+                    <TextBlock Text="{Binding Viewed.AsyncText}" Style="{StaticResource NumText}" FontSize="19"/>
+                    <TextBlock Text="particle sim ∥ graphics" Style="{StaticResource SubText}" Margin="0,5,0,0"/>
+                </StackPanel>
+                <StackPanel>
+                    <TextBlock Text="QUEUE SYNC GAPS" Style="{StaticResource LabelText}" Margin="0,0,0,8"/>
+                    <TextBlock Text="{Binding Viewed.SyncText}" Style="{StaticResource NumText}" FontSize="19"/>
+                    <TextBlock Text="GPU idle between handoffs" Style="{StaticResource SubText}" Margin="0,5,0,0"/>
+                </StackPanel>
+            </UniformGrid>
+        </Border>
+
+        <!-- Pass detail ヘッダ + サブ切替 -->
+        <Grid Margin="0,30,0,14">
+            <TextBlock Text="PASS DETAIL" Style="{StaticResource SectionTitle}" VerticalAlignment="Center"/>
+            <Border Style="{StaticResource ToggleGroup}" HorizontalAlignment="Right">
+                <StackPanel Orientation="Horizontal">
+                    <ToggleButton Style="{StaticResource ToggleChip}" Content="BREAKDOWN"
+                                  IsChecked="{Binding IsTimelineView, Converter={StaticResource InvertBool}, Mode=OneWay}"
+                                  Command="{Binding SetSubViewCommand}" CommandParameter="breakdown"/>
+                    <ToggleButton Style="{StaticResource ToggleChip}" Content="TIMELINE"
+                                  IsChecked="{Binding IsTimelineView, Mode=OneWay}"
+                                  Command="{Binding SetSubViewCommand}" CommandParameter="timeline"/>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- Breakdown -->
+        <Border Style="{StaticResource CardBorder}" Visibility="{Binding IsTimelineView, Converter={StaticResource BoolToVis}, ConverterParameter=invert}">
+            <ItemsControl ItemsSource="{Binding Viewed.Rows}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel>
+                            <Border BorderBrush="{StaticResource HairBrush}" BorderThickness="0,0,0,1" Cursor="Hand"
+                                    MouseLeftButtonUp="Row_Click">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="Background" Value="Transparent"/>
+                                        <Style.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter Property="Background" Value="{StaticResource RaiseBrush}"/>
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                                <Grid Margin="0,0,18,0" Height="56">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="24"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="180"/>
+                                        <ColumnDefinition Width="104"/>
+                                        <ColumnDefinition Width="80"/>
+                                        <ColumnDefinition Width="26"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Border Width="4" Height="30" Background="{Binding Cat.Brush}" HorizontalAlignment="Center"/>
+                                    <TextBlock Grid.Column="1" VerticalAlignment="Center" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource InkBrush}">
+                                        <Run Text="{Binding Name, Mode=OneWay}"/><Run Text="  "/><Run Text="{Binding EventText, Mode=OneWay}" FontSize="11" FontWeight="Normal" Foreground="{StaticResource FaintBrush}"/>
+                                    </TextBlock>
+                                    <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                                        <Grid Width="118" Height="7" VerticalAlignment="Center">
+                                            <Border Background="{StaticResource RaiseBrush}"/>
+                                            <Border Background="{Binding Cat.Brush}" HorizontalAlignment="Left"
+                                                    Width="{Binding PctFraction, Converter={StaticResource FractionToWidth}, ConverterParameter=118}"/>
+                                        </Grid>
+                                        <TextBlock Text="{Binding PctText}" Style="{StaticResource NumText}" FontSize="12"
+                                                   Foreground="{StaticResource MutedBrush}" Margin="11,0,0,0" Width="34" TextAlignment="Right" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                    <TextBlock Grid.Column="3" VerticalAlignment="Center" TextAlignment="Right"
+                                               Style="{StaticResource NumText}" FontSize="16" FontWeight="Bold">
+                                        <Run Text="{Binding DurText, Mode=OneWay}"/><Run Text=" ms" FontSize="11" Foreground="{StaticResource MutedBrush}" FontWeight="Normal"/>
+                                    </TextBlock>
+                                    <TextBlock Grid.Column="4" Text="{Binding OccText}" VerticalAlignment="Center" TextAlignment="Right"
+                                               Style="{StaticResource NumText}" FontSize="14">
+                                        <TextBlock.Foreground>
+                                            <SolidColorBrush Color="{StaticResource InkColor}"/>
+                                        </TextBlock.Foreground>
+                                    </TextBlock>
+                                    <TextBlock Grid.Column="5" Text="▶" FontSize="11" Foreground="{StaticResource FaintBrush}"
+                                               VerticalAlignment="Center" TextAlignment="Center" RenderTransformOrigin="0.5,0.5">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsExpanded}" Value="True">
+                                                        <Setter Property="RenderTransform">
+                                                            <Setter.Value><RotateTransform Angle="90"/></Setter.Value>
+                                                        </Setter>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                </Grid>
+                            </Border>
+
+                            <!-- 詳細ドロワー -->
+                            <Border Background="{StaticResource RaiseBrush}" BorderBrush="{Binding Cat.Brush}" BorderThickness="4,0,0,0"
+                                    Visibility="{Binding IsExpanded, Converter={StaticResource BoolToVis}}" Padding="22,18,22,20">
+                                <StackPanel>
+                                    <UniformGrid Columns="4" Margin="0,0,0,4">
+                                        <StackPanel Margin="0,0,24,12">
+                                            <TextBlock Text="Duration" Style="{StaticResource LabelText}" FontSize="11" Margin="0,0,0,5"/>
+                                            <TextBlock Style="{StaticResource NumText}" FontFamily="{StaticResource DisplayFont}" FontSize="17" FontWeight="SemiBold">
+                                                <Run Text="{Binding DurText, Mode=OneWay}"/><Run Text=" ms"/>
+                                            </TextBlock>
+                                            <TextBlock Text="{Binding PctDetailText}" Style="{StaticResource LabelText}" FontSize="12" Margin="0,3,0,0"/>
+                                        </StackPanel>
+                                        <StackPanel Margin="0,0,24,12">
+                                            <TextBlock Text="Limited by" Style="{StaticResource LabelText}" FontSize="11" Margin="0,0,0,5"/>
+                                            <TextBlock Text="{Binding Cat.Label}" Foreground="{Binding Cat.Brush}"
+                                                       FontFamily="{StaticResource DisplayFont}" FontSize="17" FontWeight="SemiBold"/>
+                                            <TextBlock Text="{Binding Cat.Why}" Style="{StaticResource LabelText}" FontSize="12" Margin="0,3,0,0" TextWrapping="Wrap"/>
+                                        </StackPanel>
+                                        <StackPanel Margin="0,0,24,12">
+                                            <TextBlock Text="Occupancy" Style="{StaticResource LabelText}" FontSize="11" Margin="0,0,0,5"/>
+                                            <TextBlock Text="{Binding OccText}" Style="{StaticResource NumText}" FontFamily="{StaticResource DisplayFont}" FontSize="17" FontWeight="SemiBold"/>
+                                            <TextBlock Style="{StaticResource LabelText}" FontSize="12" Margin="0,3,0,0">
+                                                <Run Text="limiter: "/><Run Text="{Binding LimiterText, Mode=OneWay}"/>
+                                            </TextBlock>
+                                        </StackPanel>
+                                        <StackPanel Margin="0,0,0,12">
+                                            <TextBlock Text="Speed-of-light" Style="{StaticResource LabelText}" FontSize="11" Margin="0,0,0,5"/>
+                                            <TextBlock Text="{Binding SolText}" Style="{StaticResource NumText}" FontFamily="{StaticResource DisplayFont}" FontSize="17" FontWeight="SemiBold"/>
+                                            <TextBlock Text="busiest hardware unit" Style="{StaticResource LabelText}" FontSize="12" Margin="0,3,0,0"/>
+                                        </StackPanel>
+                                    </UniformGrid>
+
+                                    <!-- 抽出済み画像 -->
+                                    <ItemsControl ItemsSource="{Binding Images}" Margin="0,0,0,12">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border BorderBrush="{StaticResource Hair2Brush}" BorderThickness="1"
+                                                        Margin="0,0,10,10" Padding="3" Background="{StaticResource SurfaceBrush}"
+                                                        Cursor="Hand" MouseLeftButtonUp="Thumbnail_Click" Tag="{Binding PngPath}">
+                                                    <StackPanel>
+                                                        <Image Source="{Binding PngPath}" Height="96" Stretch="Uniform"/>
+                                                        <TextBlock Text="{Binding ResourceName}" FontSize="10.5" Foreground="{StaticResource MutedBrush}"
+                                                                   Margin="2,3,2,1" MaxWidth="170" TextTrimming="CharacterEllipsis"/>
+                                                    </StackPanel>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+
+                                    <Border Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource HairBrush}" BorderThickness="1"
+                                            Padding="13,10" Margin="0,0,0,14">
+                                        <TextBlock Text="{Binding ProvenanceText}" FontSize="12.5" Foreground="{StaticResource Ink2Brush}" TextWrapping="Wrap"/>
+                                    </Border>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Button Style="{StaticResource PrimaryButton}" Content="{Binding OpenInPixText}"
+                                                Command="{Binding OpenInPixCommand}" Margin="0,0,10,0"/>
+                                        <Button Style="{StaticResource SubtleButton}" Content="Copy event id"
+                                                Command="{Binding CopyEventIdCommand}" Margin="0,0,10,0"/>
+                                        <Button Style="{StaticResource SubtleButton}" Content="Extract image"
+                                                Command="{Binding ExtractImageCommand}"
+                                                Visibility="{Binding CanOpenInPix, Converter={StaticResource BoolToVis}}"/>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </Border>
+
+        <!-- Timeline -->
+        <Border Style="{StaticResource CardBorder}" Padding="16,14,16,14"
+                Visibility="{Binding IsTimelineView, Converter={StaticResource BoolToVis}}">
+            <StackPanel>
+                <ctl:TimelineControl Items="{Binding Viewed.TimelineItems}"/>
+                <TextBlock Style="{StaticResource LabelText}" FontSize="11.5" Margin="0,12,0,0" TextWrapping="Wrap">
+                    <Run Text="Rows" FontWeight="Bold" Foreground="{StaticResource Ink2Brush}"/><Run Text=" = marker nesting depth (parent → children)   ·   "/><Run Text="Async lane" FontWeight="Bold" Foreground="{StaticResource Ink2Brush}"/><Run Text=" shows compute overlapping graphics   ·   Ctrl+wheel = zoom · drag = pan · double-click = reset · hover for exact timing"/>
+                </TextBlock>
+            </StackPanel>
+        </Border>
+    </StackPanel>
+</UserControl>

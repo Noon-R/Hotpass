@@ -1,0 +1,19 @@
+﻿<Application x:Class="Hotpass.App.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:Hotpass.App"
+             StartupUri="MainWindow.xaml">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Themes/Dark.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+            <local:BoolToVisibilityConverter x:Key="BoolToVis"/>
+            <local:NullToVisibilityConverter x:Key="NullToVis"/>
+            <local:FractionToWidthConverter x:Key="FractionToWidth"/>
+            <local:InvertBoolConverter x:Key="InvertBool"/>
+            <local:DeltaStateToVisibilityConverter x:Key="DeltaGoodToVis" Target="Good"/>
+            <local:DeltaStateToVisibilityConverter x:Key="DeltaBadToVis" Target="Bad"/>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

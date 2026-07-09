@@ -482,3 +482,6 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
+
+# WPF プロジェクト Hotpass.App が macOS 用の *.app パターンに誤マッチするため除外解除
+!src/Hotpass.App/

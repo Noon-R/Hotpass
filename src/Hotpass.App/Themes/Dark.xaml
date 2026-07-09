@@ -1,0 +1,170 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!--
+      Instrument スキン(ユーザ選定・中密度)。
+      原則: 角丸なし・影なし・ヘアライン・モノスペース数値・アンバー(#EFA13C)は
+      「予算線 / 選択 / アクティブモード / COMPARE 役割」だけの1点使い。
+      カテゴリ7色はデータ表現専用。
+    -->
+    <Color x:Key="BgColor">#0D0E10</Color>
+    <Color x:Key="SurfaceColor">#131417</Color>
+    <Color x:Key="RaiseColor">#1A1C20</Color>
+    <Color x:Key="InkColor">#E6E4DE</Color>
+    <Color x:Key="Ink2Color">#B9B7B0</Color>
+    <Color x:Key="MutedColor">#7D7C76</Color>
+    <Color x:Key="FaintColor">#5C5B56</Color>
+    <Color x:Key="HairColor">#232526</Color>
+    <Color x:Key="Hair2Color">#33342F</Color>
+    <Color x:Key="AccentColor">#EFA13C</Color>
+    <Color x:Key="GoodColor">#3DBD8A</Color>
+    <Color x:Key="BadColor">#F0604A</Color>
+
+    <SolidColorBrush x:Key="BgBrush" Color="{StaticResource BgColor}"/>
+    <SolidColorBrush x:Key="SurfaceBrush" Color="{StaticResource SurfaceColor}"/>
+    <SolidColorBrush x:Key="RaiseBrush" Color="{StaticResource RaiseColor}"/>
+    <SolidColorBrush x:Key="InkBrush" Color="{StaticResource InkColor}"/>
+    <SolidColorBrush x:Key="Ink2Brush" Color="{StaticResource Ink2Color}"/>
+    <SolidColorBrush x:Key="MutedBrush" Color="{StaticResource MutedColor}"/>
+    <SolidColorBrush x:Key="FaintBrush" Color="{StaticResource FaintColor}"/>
+    <SolidColorBrush x:Key="HairBrush" Color="{StaticResource HairColor}"/>
+    <SolidColorBrush x:Key="Hair2Brush" Color="{StaticResource Hair2Color}"/>
+    <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource AccentColor}"/>
+    <SolidColorBrush x:Key="GoodBrush" Color="{StaticResource GoodColor}"/>
+    <SolidColorBrush x:Key="BadBrush" Color="{StaticResource BadColor}"/>
+    <!-- Instrument スキンではピル背景を使わず枠線表現にするが、NEW/GONE タグ用に薄面を残す -->
+    <SolidColorBrush x:Key="GoodBgBrush" Color="#14332A"/>
+    <SolidColorBrush x:Key="BadBgBrush" Color="#381B15"/>
+    <!-- ソースバッジ: アンバー枠のアウトライン(PIX) / ニュートラル(NSIGHT) -->
+    <SolidColorBrush x:Key="PixBadgeBg" Color="#00000000"/>
+    <SolidColorBrush x:Key="PixBadgeFg" Color="{StaticResource AccentColor}"/>
+    <SolidColorBrush x:Key="NsightBadgeBg" Color="#00000000"/>
+    <SolidColorBrush x:Key="NsightBadgeFg" Color="#8FA89B"/>
+
+    <!-- 律速カテゴリ 7 分類(暖色アクセントと衝突しないよう memory=クリムゾン / compute=マスタード) -->
+    <Color x:Key="CatRasterColor">#5B8DEF</Color>
+    <Color x:Key="CatTextureColor">#9D7BE0</Color>
+    <Color x:Key="CatMemoryColor">#E14B4B</Color>
+    <Color x:Key="CatComputeColor">#C9A227</Color>
+    <Color x:Key="CatGeometryColor">#2FB98B</Color>
+    <Color x:Key="CatSyncColor">#7E8794</Color>
+    <Color x:Key="CatUnknownColor">#5E6672</Color>
+
+    <FontFamily x:Key="UiFont">Segoe UI</FontFamily>
+    <FontFamily x:Key="DisplayFont">Segoe UI Variable Display, Segoe UI</FontFamily>
+    <FontFamily x:Key="MonoFont">Cascadia Mono, Consolas</FontFamily>
+
+    <!-- 数値: モノスペースで桁揃え -->
+    <Style x:Key="NumText" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource MonoFont}"/>
+        <Setter Property="Typography.NumeralAlignment" Value="Tabular"/>
+        <Setter Property="Foreground" Value="{StaticResource InkBrush}"/>
+    </Style>
+
+    <Style x:Key="SectionTitle" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="{StaticResource MutedBrush}"/>
+    </Style>
+
+    <!-- マイクロラベル(テキストは XAML 側で大文字表記にする) -->
+    <Style x:Key="LabelText" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="10.5"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="{StaticResource MutedBrush}"/>
+    </Style>
+
+    <!-- 補足テキスト(通常ケース) -->
+    <Style x:Key="SubText" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="11.5"/>
+        <Setter Property="Foreground" Value="{StaticResource MutedBrush}"/>
+    </Style>
+
+    <!-- ボタン共通: 直角・面なし -->
+    <Style x:Key="SubtleButton" TargetType="ButtonBase">
+        <Setter Property="Foreground" Value="{StaticResource Ink2Brush}"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderBrush" Value="{StaticResource Hair2Brush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Padding" Value="12,6"/>
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ButtonBase">
+                    <Border x:Name="bd" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}" Padding="{TemplateBinding Padding}">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="bd" Property="BorderBrush" Value="{StaticResource MutedBrush}"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.4"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="PrimaryButton" TargetType="ButtonBase" BasedOn="{StaticResource SubtleButton}">
+        <Setter Property="Background" Value="{StaticResource InkBrush}"/>
+        <Setter Property="Foreground" Value="#141310"/>
+        <Setter Property="BorderBrush" Value="{StaticResource InkBrush}"/>
+    </Style>
+
+    <!-- モード/サブビューのトグル: アクティブ=アンバー面+暗文字 -->
+    <Style x:Key="ToggleChip" TargetType="ToggleButton">
+        <Setter Property="Foreground" Value="{StaticResource MutedBrush}"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Padding" Value="14,5"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ToggleButton">
+                    <Border x:Name="bd" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="bd" Property="Background" Value="{StaticResource AccentBrush}"/>
+                            <Setter Property="Foreground" Value="#141310"/>
+                            <Setter Property="FontWeight" Value="Bold"/>
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="Foreground" Value="{StaticResource InkBrush}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="ToggleGroup" TargetType="Border">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderBrush" Value="{StaticResource Hair2Brush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Padding" Value="0"/>
+    </Style>
+
+    <!-- カード: 直角・ヘアライン枠のみ -->
+    <Style x:Key="CardBorder" TargetType="Border">
+        <Setter Property="Background" Value="{StaticResource SurfaceBrush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource Hair2Brush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+    </Style>
+
+    <Style TargetType="ToolTip">
+        <Setter Property="Background" Value="#0A0B0C"/>
+        <Setter Property="Foreground" Value="{StaticResource InkBrush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource Hair2Brush}"/>
+        <Setter Property="FontFamily" Value="{StaticResource UiFont}"/>
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="Padding" Value="10,6"/>
+    </Style>
+</ResourceDictionary>
