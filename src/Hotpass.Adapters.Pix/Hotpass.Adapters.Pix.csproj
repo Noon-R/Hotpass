@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Hotpass.Core\Hotpass.Core.csproj" />
+    <InternalsVisibleTo Include="Hotpass.Adapters.Pix.Tests" />
   </ItemGroup>
 
   <PropertyGroup>
