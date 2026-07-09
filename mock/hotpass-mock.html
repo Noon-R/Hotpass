@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hotpass</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Archivo+Expanded:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F4F5F6; --surface:#FFFFFF; --raise:#F1F3F5;
+    --ink:#15181D; --ink2:#3A414B; --muted:#59616C; --faint:#828A94;
+    --hair:#D8DCE1; --hair2:#C3C9D0;
+    --brand:#0A4FE0; --good:#0E8A54; --bad:#D23B22;
+    --raster:#2F6FE0; --texture:#8A4FD0; --memory:#E0492E;
+    --compute:#C77F14; --geometry:#0E9E74; --sync:#767E8A; --unknown:#A9B0B8;
+    --shadow:0 1px 2px rgba(21,24,29,.06), 0 8px 26px rgba(21,24,29,.07);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{background:var(--bg); color:var(--ink); font-family:"Archivo",system-ui,sans-serif;
+    font-size:14px; line-height:1.5; -webkit-font-smoothing:antialiased; padding:0 0 72px}
+  .num{font-variant-numeric:tabular-nums}
+  .wrap{max-width:1180px; margin:0 auto; padding:0 28px}
+
+  header{border-bottom:1px solid var(--hair); background:var(--surface)}
+  .head-in{display:flex; align-items:center; gap:13px; padding:16px 0}
+  .mark{display:inline-flex; gap:3px; align-items:flex-end; height:20px}
+  .mark i{width:4px; border-radius:1px; display:block; background:var(--ink)}
+  .mark i:nth-child(1){height:9px}
+  .mark i:nth-child(2){height:20px; background:var(--brand)}
+  .mark i:nth-child(3){height:13px}
+  .mark i:nth-child(4){height:6px}
+  .wordmark{font-family:"Archivo Expanded"; font-weight:700; font-size:18px; letter-spacing:-.01em}
+  .tagline{color:var(--muted); font-size:12px; margin-left:3px}
+
+  .rail{padding:20px 0 22px; border-bottom:1px solid var(--hair)}
+  .rail-top{display:flex; align-items:center; margin-bottom:14px}
+  .rail-top h2{font-size:12.5px; margin:0; color:var(--ink2); font-weight:600}
+  .mode{margin-left:auto; display:inline-flex; background:var(--surface); border:1px solid var(--hair2); border-radius:9px; padding:3px}
+  .mode button{appearance:none; border:0; background:transparent; cursor:pointer; color:var(--muted);
+    font-family:inherit; font-size:13px; font-weight:600; padding:7px 16px; border-radius:6px}
+  .mode button[aria-pressed="true"]{background:var(--ink); color:#fff}
+  .mode button:focus-visible{outline:2px solid var(--brand); outline-offset:2px}
+
+  .chips{display:flex; gap:12px; flex-wrap:wrap; align-items:stretch}
+  .chip{position:relative; background:var(--surface); border:1.5px solid var(--hair2); border-radius:11px;
+    padding:14px 16px 13px; min-width:224px; flex:0 0 auto; box-shadow:0 1px 2px rgba(21,24,29,.04)}
+  .chip.viewing,.chip.base{border-color:var(--ink)}
+  .chip.compare{border-color:var(--brand)}
+  .chip-role{position:absolute; top:-10px; left:14px; font-size:9.5px; font-weight:700; letter-spacing:.06em; padding:3px 8px; border-radius:5px}
+  .chip-role.base{background:var(--ink); color:#fff}
+  .chip-role.compare{background:var(--brand); color:#fff}
+  .chip-name{font-weight:700; font-size:14px; display:flex; align-items:center; gap:8px; margin-bottom:5px}
+  .src{font-size:9.5px; font-weight:700; letter-spacing:.04em; padding:2px 7px; border-radius:5px}
+  .src.pix{background:#E3ECFB; color:#1B54B8}
+  .src.nsight{background:#DCF1E7; color:#0B7B52}
+  .chip-meta{color:var(--muted); font-size:11.5px}
+  .chip-total{font-family:"Archivo Expanded"; font-weight:700; font-size:19px; margin:7px 0 1px; font-variant-numeric:tabular-nums; display:flex; align-items:baseline; gap:8px}
+  .chip-total .u{font-size:12px; color:var(--muted); font-weight:600; font-family:"Archivo"}
+  .chip-total .d{font-size:12px; font-weight:700; font-family:"Archivo"}
+  .d.over{color:var(--bad)} .d.under{color:var(--good)}
+  .chip-prov{color:var(--muted); font-size:11px; margin-top:3px}
+  .chip-act{display:flex; gap:7px; margin-top:12px}
+  .cbtn{flex:1; appearance:none; font-family:inherit; font-size:12px; font-weight:600; cursor:pointer;
+    padding:7px 10px; border-radius:7px; border:1.5px solid var(--hair2); background:var(--raise); color:var(--ink2)}
+  .cbtn[aria-pressed="true"]{background:var(--ink); color:#fff; border-color:var(--ink)}
+  .cbtn:focus-visible{outline:2px solid var(--brand); outline-offset:1px}
+  .chip-x{position:absolute; top:10px; right:11px; cursor:pointer; color:var(--faint); font-size:16px; line-height:1; background:none; border:0; padding:0}
+  .chip-x:hover{color:var(--ink)}
+  .addchip{min-width:138px; border:1.5px dashed var(--hair2); background:var(--surface); border-radius:11px;
+    color:var(--muted); cursor:pointer; font-family:inherit; font-size:13px; font-weight:600;
+    display:flex; align-items:center; justify-content:center; gap:6px}
+  .addchip:hover{border-color:var(--muted); color:var(--ink)}
+  .addwrap{position:relative}
+  .addlist{position:absolute; top:calc(100% + 6px); left:0; z-index:20; background:var(--surface);
+    border:1.5px solid var(--hair2); border-radius:11px; padding:6px; min-width:244px; box-shadow:var(--shadow); display:none}
+  .addlist.open{display:block}
+  .addlist button{display:flex; justify-content:space-between; width:100%; text-align:left; background:none; border:0;
+    color:var(--ink); font-family:inherit; font-size:13px; font-weight:500; padding:9px 11px; border-radius:8px; cursor:pointer; gap:12px}
+  .addlist button:hover{background:var(--raise)}
+  .addlist button span{color:var(--muted); font-size:11px; font-variant-numeric:tabular-nums}
+  .addlist .none{color:var(--muted); font-size:12px; padding:9px 11px}
+
+  .vhead{display:flex; align-items:baseline; gap:11px; flex-wrap:wrap; padding:30px 0 4px}
+  .vhead .file{font-family:"Archivo Expanded"; font-weight:600; font-size:17px}
+  .vhead .sub{color:var(--muted); font-size:12.5px}
+  .hero{padding:16px 0 8px}
+  .hero-row{display:flex; align-items:flex-end; justify-content:space-between; gap:20px; flex-wrap:wrap}
+  .lbl{color:var(--muted); font-size:12px; margin-bottom:9px; font-weight:500}
+  .ftime{display:flex; align-items:baseline; gap:14px; flex-wrap:wrap}
+  .ftime .n{font-family:"Archivo Expanded"; font-weight:700; font-size:54px; line-height:.9; letter-spacing:-.02em; font-variant-numeric:tabular-nums}
+  .ftime .u{font-size:21px; color:var(--muted); font-weight:600}
+  .delta-pill{font-size:13px; font-weight:700; padding:6px 12px; border-radius:8px}
+  .delta-pill.over{background:#FADFD9; color:#B22F19}
+  .delta-pill.under{background:#D6EFE1; color:#0B6E43}
+  .hero-right{text-align:right; color:var(--muted); font-size:12.5px}
+  .hero-right b{color:var(--ink); font-weight:700}
+
+  .tl-hero{margin-top:22px}
+  .bar{position:relative; height:46px; display:flex; border-radius:8px; overflow:hidden; background:#E3E6E9; border:1px solid var(--hair2)}
+  .bar.dual{margin-bottom:8px}
+  .seg{height:100%; position:relative; transition:width .4s cubic-bezier(.4,0,.1,1)}
+  .seg + .seg{box-shadow:inset 1.5px 0 0 rgba(255,255,255,.6)}
+  .seg:hover{filter:brightness(1.08)}
+  .tip{position:absolute; bottom:calc(100% + 9px); left:50%; transform:translateX(-50%);
+    background:var(--ink); color:#fff; border-radius:7px; padding:7px 10px; white-space:nowrap; font-size:12px; font-weight:500;
+    opacity:0; pointer-events:none; transition:opacity .12s; z-index:30; box-shadow:var(--shadow)}
+  .seg:hover .tip,.tspan:hover .tip{opacity:1}
+  .tip .s{color:#AEB6C4}
+  .over-hatch{position:absolute; top:0; bottom:0; z-index:3; pointer-events:none;
+    background:repeating-linear-gradient(-45deg, rgba(210,59,34,.4) 0 5px, rgba(210,59,34,.14) 5px 10px)}
+  .budget{position:absolute; top:-5px; bottom:-5px; width:2.5px; background:var(--ink); z-index:6}
+  .ruler{position:relative; height:20px; margin-top:8px}
+  .rtick{position:absolute; top:0; transform:translateX(-50%); color:var(--muted); font-size:11px; font-variant-numeric:tabular-nums}
+  .rtick::before{content:""; position:absolute; top:-9px; left:50%; width:1px; height:6px; background:var(--hair2)}
+  .rtick.bud{color:var(--ink); font-weight:700}
+  .rtick.bud::before{background:var(--ink); height:7px}
+
+  .barside{display:inline-flex; align-items:center; gap:8px; font-size:12px; color:var(--muted); margin-bottom:7px}
+  .rt{font-size:9.5px; font-weight:700; letter-spacing:.06em; padding:3px 8px; border-radius:5px}
+  .rt.base{background:var(--ink); color:#fff}
+  .rt.compare{background:var(--brand); color:#fff}
+  .barside b{color:var(--ink); font-weight:700; font-variant-numeric:tabular-nums}
+
+  .legend{display:flex; gap:18px; flex-wrap:wrap; margin-top:18px}
+  .lg{display:flex; align-items:center; gap:7px; color:var(--ink2); font-size:12px; font-weight:500}
+  .lg i{width:10px; height:10px; border-radius:3px}
+
+  .cluster{display:flex; border-top:1px solid var(--hair); border-bottom:1px solid var(--hair); margin:30px 0 6px; flex-wrap:wrap}
+  .ro{flex:1; min-width:150px; padding:16px 22px 15px; border-right:1px solid var(--hair)}
+  .ro:first-child{padding-left:0}
+  .ro:last-child{border-right:0; padding-right:0}
+  .ro .k{color:var(--muted); font-size:12px; margin-bottom:9px; font-weight:500}
+  .ro .v{font-family:"Archivo Expanded"; font-weight:600; font-size:21px; display:flex; align-items:center; gap:9px; letter-spacing:-.01em}
+  .ro .v.pos{color:var(--bad)} .ro .v.neg{color:var(--good)}
+  .ro .s{color:var(--muted); font-size:11.5px; margin-top:6px}
+  .dot{width:12px; height:12px; border-radius:3px; flex:none}
+
+  .sh{display:flex; align-items:center; justify-content:space-between; gap:14px; margin:34px 0 15px; flex-wrap:wrap}
+  .sh h2{font-family:"Archivo Expanded"; font-weight:600; font-size:16px; margin:0; letter-spacing:-.01em}
+  .sh .hint{color:var(--muted); font-size:12px}
+  .subtoggle{display:inline-flex; background:var(--surface); border:1.5px solid var(--hair2); border-radius:8px; padding:3px}
+  .subtoggle button{appearance:none; border:0; background:transparent; cursor:pointer; color:var(--muted);
+    font-family:inherit; font-size:12.5px; font-weight:600; padding:6px 13px; border-radius:5px}
+  .subtoggle button[aria-pressed="true"]{background:var(--ink); color:#fff}
+  .subtoggle button:focus-visible{outline:2px solid var(--brand); outline-offset:2px}
+
+  .tbl{background:var(--surface); border:1.5px solid var(--hair2); border-radius:12px; overflow:hidden; box-shadow:var(--shadow)}
+  .trow{display:grid; grid-template-columns:4px 1.7fr 170px 104px 92px 22px; align-items:center; gap:16px;
+    padding-right:18px; cursor:pointer; border-bottom:1px solid var(--hair)}
+  .trow:last-of-type{border-bottom:0}
+  .trow:hover{background:var(--raise)}
+  .trow:focus-visible{outline:2px solid var(--brand); outline-offset:-2px}
+  .tick4{width:4px; height:30px; border-radius:2px; margin-left:3px}
+  .pn{font-weight:600; font-size:14px; padding:17px 0}
+  .pn .ev{color:var(--faint); font-size:11px; font-weight:400; margin-left:3px}
+  .prop{display:flex; align-items:center; gap:11px}
+  .ptrack{flex:1; height:7px; background:#E7EAEE; border-radius:4px; overflow:hidden}
+  .pfill{height:100%; border-radius:4px}
+  .ppct{color:var(--muted); font-size:12px; width:34px; text-align:right; font-variant-numeric:tabular-nums; font-weight:500}
+  .dur{text-align:right; font-size:16px; font-weight:700; font-variant-numeric:tabular-nums}
+  .dur .u{font-size:11px; color:var(--muted); font-weight:500}
+  .occ{text-align:right; font-size:14px; font-variant-numeric:tabular-nums; font-weight:500}
+  .occ.na{color:var(--faint)}
+  .chev{color:var(--faint); font-size:12px; transition:transform .15s; text-align:center}
+  .trow.open .chev{transform:rotate(90deg)}
+
+  .drawer{grid-column:1/-1; overflow:hidden; max-height:0; transition:max-height .22s ease}
+  .trow.open + .drawer{max-height:320px}
+  .din{padding:20px 22px 22px; background:var(--raise); border-top:1px solid var(--hair); border-left:4px solid var(--dc,var(--unknown))}
+  .metrics{display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:18px 28px; margin-bottom:17px}
+  .m .k{color:var(--muted); font-size:11px; margin-bottom:6px; font-weight:500}
+  .m .v{font-family:"Archivo Expanded"; font-weight:600; font-size:17px}
+  .m .v small{font-family:"Archivo"; font-weight:400; color:var(--muted); font-size:12px; display:block; margin-top:4px}
+  .m .v .na{color:var(--faint)}
+  .prov{color:var(--ink2); font-size:12.5px; padding:12px 14px; background:var(--surface); border:1px solid var(--hair); border-radius:9px; margin-bottom:16px}
+  .prov b{color:var(--ink); font-weight:700}
+  .dact{display:flex; gap:10px; flex-wrap:wrap}
+  .btn{font-family:inherit; font-size:13px; font-weight:600; cursor:pointer; border-radius:9px; padding:10px 16px; border:1.5px solid var(--hair2); background:var(--surface); color:var(--ink)}
+  .btn.pri{background:var(--ink); color:#fff; border-color:var(--ink)}
+  .btn:focus-visible{outline:2px solid var(--brand); outline-offset:2px}
+
+  /* timeline */
+  .tlview{background:var(--surface); border:1.5px solid var(--hair2); border-radius:12px; box-shadow:var(--shadow); padding:16px 18px 18px; overflow-x:auto}
+  .tl-ruler-wrap{display:flex; margin-bottom:6px}
+  .tl-gutwidth{flex:none; width:104px}
+  .tl-ruler{position:relative; flex:1; height:18px; min-width:520px}
+  .tl-body{display:flex}
+  .tl-gutter{flex:none; width:104px; display:flex; flex-direction:column}
+  .gl{display:flex; flex-direction:column; justify-content:center; padding-right:12px; border-right:1.5px solid var(--hair2)}
+  .gl b{font-size:12.5px; font-weight:700; color:var(--ink)}
+  .gl small{font-size:10.5px; color:var(--muted)}
+  .tl-plot{position:relative; flex:1; min-width:520px}
+  .tl-band{position:relative}
+  .tl-band.async{border-top:1px dashed var(--hair2); background:rgba(199,127,20,.05)}
+  .tspan{position:absolute; height:26px; border-radius:5px; display:flex; align-items:center; padding:0 8px;
+    font-size:11.5px; font-weight:600; overflow:hidden; white-space:nowrap; cursor:default; box-shadow:inset 0 0 0 1px rgba(255,255,255,.18)}
+  .tspan:hover{filter:brightness(1.06); z-index:20}
+  .tspan .tip{font-weight:500}
+  .tl-grid{position:absolute; top:0; bottom:0; width:1px; background:var(--hair); z-index:0}
+  .tl-budget{position:absolute; top:0; bottom:0; width:2.5px; background:var(--ink); z-index:15}
+  .tl-budget::after{content:"16.6 ms budget"; position:absolute; top:-2px; left:6px; font-size:10.5px; font-weight:600; color:var(--ink); white-space:nowrap}
+  .tl-note{color:var(--muted); font-size:11.5px; margin-top:13px; display:flex; gap:18px; flex-wrap:wrap}
+  .tl-note b{color:var(--ink2)}
+
+  /* compare */
+  .cmpb{display:flex; align-items:center; gap:18px; flex-wrap:wrap; padding:18px 0; border-top:1px solid var(--hair); border-bottom:1px solid var(--hair); margin-top:30px}
+  .side{display:flex; align-items:center; gap:10px}
+  .side .fn{font-family:"Archivo Expanded"; font-weight:600; font-size:15px}
+  .side .fs{color:var(--muted); font-size:12px}
+  .arrow{color:var(--faint); font-size:16px}
+  .swap{appearance:none; background:var(--surface); border:1.5px solid var(--hair2); color:var(--ink2); cursor:pointer; font-family:inherit; font-size:12.5px; font-weight:600; padding:8px 13px; border-radius:8px}
+  .swap:hover{color:var(--ink); border-color:var(--muted)}
+  .swap:focus-visible{outline:2px solid var(--brand); outline-offset:2px}
+  .conv{margin-left:auto; text-align:right; color:var(--muted); font-size:12px; line-height:1.5}
+  .conv .g{color:var(--good); font-weight:700} .conv .r{color:var(--bad); font-weight:700}
+
+  .ctbl{background:var(--surface); border:1.5px solid var(--hair2); border-radius:12px; overflow:hidden; box-shadow:var(--shadow)}
+  .ctrow{display:grid; grid-template-columns:4px 1.5fr 84px 84px 92px 1.2fr; align-items:center; gap:16px; padding-right:18px; border-bottom:1px solid var(--hair)}
+  .ctrow:last-child{border-bottom:0}
+  .ctrow.hd{background:var(--raise); color:var(--muted); font-size:11.5px; font-weight:600}
+  .ctrow.hd>div{padding:12px 0}
+  .cpn{font-weight:600; font-size:14px; padding:15px 0}
+  .cb{text-align:right; font-size:14px; color:var(--muted); font-variant-numeric:tabular-nums}
+  .cc{text-align:right; font-size:14.5px; font-weight:600; font-variant-numeric:tabular-nums}
+  .cd{text-align:right; font-size:15px; font-weight:700; font-variant-numeric:tabular-nums}
+  .cd.good{color:var(--good)} .cd.bad{color:var(--bad)} .cd.zero{color:var(--faint)}
+  .np{font-size:9px; font-weight:700; letter-spacing:.04em; padding:2px 6px; border-radius:4px; margin-left:8px}
+  .np.new{background:#D6EFE1; color:var(--good)} .np.gone{background:#EAECEF; color:var(--muted)}
+  .dbar{position:relative; height:24px}
+  .dbar .mid{position:absolute; left:50%; top:3px; bottom:3px; width:1.5px; background:var(--hair2)}
+  .dbar .fill{position:absolute; top:6px; height:11px; border-radius:3px}
+  .dbar .fill.bad{left:50%; background:var(--bad)}
+  .dbar .fill.good{right:50%; background:var(--good)}
+  .cnote{color:var(--muted); font-size:12px; margin-top:14px; line-height:1.6}
+
+  .empty{padding:72px 20px; text-align:center; color:var(--muted)}
+  .empty .b{font-family:"Archivo Expanded"; font-size:19px; color:var(--ink2); margin-bottom:7px}
+  footer{color:var(--muted); font-size:11.5px; padding-top:34px; line-height:1.75; max-width:780px}
+
+  @media (max-width:860px){
+    .trow{grid-template-columns:4px 1.5fr 104px 84px 22px; gap:12px}
+    .prop{display:none}
+    .ctrow{grid-template-columns:4px 1.4fr 72px 88px; gap:12px}
+    .cc,.dbar{display:none}
+    .ftime .n{font-size:42px}
+  }
+  @media (prefers-reduced-motion:reduce){*{transition:none !important}}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap head-in">
+    <span class="mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+    <span class="wordmark">Hotpass</span>
+    <span class="tagline">where the frame goes — triage first, debug in PIX</span>
+  </div>
+</header>
+<div class="wrap">
+  <section class="rail">
+    <div class="rail-top">
+      <h2>Open captures</h2>
+      <div class="mode" role="group" aria-label="Mode">
+        <button data-mode="single" aria-pressed="true">Single</button>
+        <button data-mode="compare" aria-pressed="false">Compare</button>
+      </div>
+    </div>
+    <div class="chips" id="chips"></div>
+  </section>
+  <main id="main"></main>
+  <footer>
+    Hotpass normalizes PIX GPU captures and Nsight GPU traces into one per-pass view. What a capture can show depends on
+    the file — a PIX capture carries occupancy and limiter, a Nsight trace carries occupancy and speed-of-light; missing
+    fields read “—”. For shader, resource and pixel-level work, open the flagged event in PIX.
+  </footer>
+</div>
+<script>
+const CATS={
+  raster:{label:'Raster',color:'#2F6FE0',why:'Fixed-function raster / depth bound'},
+  texture:{label:'Texture',color:'#8A4FD0',why:'Texture fetch / sampler bound'},
+  memory:{label:'Memory',color:'#E0492E',why:'VRAM bandwidth / L2 miss bound'},
+  compute:{label:'Compute',color:'#C77F14',why:'ALU / SM math bound'},
+  geometry:{label:'Geometry',color:'#0E9E74',why:'Geometry / vertex bound'},
+  sync:{label:'Sync/Idle',color:'#767E8A',why:'GPU starved — waiting on a queue'},
+  unknown:{label:'Unknown',color:'#A9B0B8',why:'Not enough data to classify'},
+};
+const PROVIDES={pix:{occ:1,limiter:1,sol:0},nsight:{occ:1,limiter:0,sol:1}};
+// nested marker map: name -> [ [childLabel, fractionOfParent, optional grandchildren], ... ]
+const NEST={
+  ShadowPass:[['Cascade 0',.34],['Cascade 1',.28],['Cascade 2',.22],['Cascade 3',.16]],
+  GBuffer:[['Opaque',.60],['Masked',.28],['Decals',.12]],
+  Lighting:[['Cluster build',.18],['Directional',.34],['Local lights',.48,[['Point',.62],['Spot',.38]]]],
+  Bloom:[['Downsample',.5],['Upsample',.5]],
+};
+const BUDGET=16.6, TRACK=20;
+const LIB={
+  A:{file:'main.wpix',src:'pix',frame:2314,async:62,sync:0.8,loaded:true,p:[
+    {name:'ShadowPass',event:1204,dur:5.4,cat:'raster',occ:44,limiter:'ROP / depth',sol:null},
+    {name:'GBuffer',event:1560,dur:3.8,cat:'texture',occ:58,limiter:'TEX wait',sol:null},
+    {name:'Lighting',event:1847,dur:3.1,cat:'memory',occ:51,limiter:'L2 miss / bw',sol:null},
+    {name:'SSR',event:2033,dur:2.2,cat:'texture',occ:47,limiter:'TEX wait',sol:null},
+    {name:'SSAO',event:2210,dur:1.3,cat:'compute',occ:66,limiter:'VGPR limited',sol:null},
+    {name:'Bloom',event:2402,dur:1.1,cat:'memory',occ:39,limiter:'bandwidth',sol:null},
+    {name:'ToneMap',event:2515,dur:0.6,cat:'memory',occ:35,limiter:'bandwidth',sol:null},
+    {name:'UI / ImGui',event:2588,dur:0.4,cat:'raster',occ:20,limiter:null,sol:null},
+    {name:'Present',event:2601,dur:0.3,cat:'unknown',occ:null,limiter:null,sol:null}]},
+  B:{file:'shadowfix.wpix',src:'pix',frame:2314,async:64,sync:0.7,loaded:true,p:[
+    {name:'ShadowPass',event:1204,dur:2.9,cat:'raster',occ:63,limiter:'ROP / depth',sol:null},
+    {name:'GBuffer',event:1560,dur:3.9,cat:'texture',occ:57,limiter:'TEX wait',sol:null},
+    {name:'Lighting',event:1847,dur:3.0,cat:'memory',occ:52,limiter:'L2 miss / bw',sol:null},
+    {name:'SSR',event:2033,dur:2.2,cat:'texture',occ:47,limiter:'TEX wait',sol:null},
+    {name:'SSAO',event:2210,dur:1.3,cat:'compute',occ:66,limiter:'VGPR limited',sol:null},
+    {name:'Bloom',event:2402,dur:1.1,cat:'memory',occ:39,limiter:'bandwidth',sol:null},
+    {name:'ToneMap',event:2515,dur:0.6,cat:'memory',occ:35,limiter:'bandwidth',sol:null},
+    {name:'UI / ImGui',event:2588,dur:0.4,cat:'raster',occ:20,limiter:null,sol:null},
+    {name:'Present',event:2601,dur:0.3,cat:'unknown',occ:null,limiter:null,sol:null}]},
+  C:{file:'main.nsys-rep',src:'nsight',frame:2314,async:60,sync:0.9,loaded:false,p:[
+    {name:'ShadowPass',event:1204,dur:5.6,cat:'raster',occ:43,limiter:null,sol:'PROP 79%'},
+    {name:'GBuffer',event:1560,dur:3.7,cat:'texture',occ:59,limiter:null,sol:'TEX 82%'},
+    {name:'Lighting',event:1847,dur:3.2,cat:'memory',occ:50,limiter:null,sol:'VRAM 75%'},
+    {name:'SSR',event:2033,dur:2.2,cat:'texture',occ:46,limiter:null,sol:'TEX 70%'},
+    {name:'SSAO',event:2210,dur:1.2,cat:'compute',occ:67,limiter:null,sol:'SM 72%'},
+    {name:'Bloom',event:2402,dur:1.1,cat:'memory',occ:38,limiter:null,sol:'VRAM 66%'},
+    {name:'ToneMap',event:2515,dur:0.6,cat:'memory',occ:34,limiter:null,sol:'VRAM 59%'},
+    {name:'UI / ImGui',event:2588,dur:0.5,cat:'raster',occ:19,limiter:null,sol:'PROP 41%'},
+    {name:'Present',event:2601,dur:0.3,cat:'unknown',occ:null,limiter:null,sol:null}]},
+  D:{file:'highend_main.wpix',src:'pix',frame:2314,async:58,sync:0.4,loaded:false,p:[
+    {name:'ShadowPass',event:1204,dur:3.2,cat:'raster',occ:52,limiter:'ROP / depth',sol:null},
+    {name:'GBuffer',event:1560,dur:2.3,cat:'texture',occ:64,limiter:'TEX wait',sol:null},
+    {name:'Lighting',event:1847,dur:1.9,cat:'memory',occ:58,limiter:'bandwidth',sol:null},
+    {name:'SSR',event:2033,dur:1.3,cat:'texture',occ:55,limiter:'TEX wait',sol:null},
+    {name:'SSAO',event:2210,dur:0.8,cat:'compute',occ:70,limiter:'VGPR limited',sol:null},
+    {name:'Bloom',event:2402,dur:0.7,cat:'memory',occ:44,limiter:'bandwidth',sol:null},
+    {name:'ToneMap',event:2515,dur:0.4,cat:'memory',occ:40,limiter:'bandwidth',sol:null},
+    {name:'UI / ImGui',event:2588,dur:0.3,cat:'raster',occ:22,limiter:null,sol:null},
+    {name:'Present',event:2601,dur:0.2,cat:'unknown',occ:null,limiter:null,sol:null}]},
+};
+const total=c=>c.p.reduce((s,x)=>s+x.dur,0);
+const reduce=window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+let mode='single', svc='breakdown', viewId='A', baseId='A', cmpId='B';
+
+function tint(hex,a){const n=parseInt(hex.slice(1),16); let r=n>>16,g=n>>8&255,b=n&255;
+  r=Math.round(r+(255-r)*a); g=Math.round(g+(255-g)*a); b=Math.round(b+(255-b)*a); return `rgb(${r},${g},${b})`;}
+
+/* rail */
+function renderRail(){
+  const host=document.getElementById('chips'); host.innerHTML='';
+  Object.entries(LIB).filter(([,c])=>c.loaded).forEach(([id,c])=>{
+    const t=total(c), over=t-BUDGET; const el=document.createElement('div'); el.className='chip'; let role='';
+    if(mode==='single'&&id===viewId) el.classList.add('viewing');
+    if(mode==='compare'&&id===baseId){el.classList.add('base'); role='<span class="chip-role base">BASE</span>';}
+    if(mode==='compare'&&id===cmpId){el.classList.add('compare'); role='<span class="chip-role compare">COMPARE</span>';}
+    el.innerHTML=role+`
+      <button class="chip-x" data-close="${id}" title="Close">×</button>
+      <div class="chip-name">${c.file}<span class="src ${c.src}">${c.src==='pix'?'PIX':'NSIGHT'}</span></div>
+      <div class="chip-meta">frame ${c.frame} · D3D12</div>
+      <div class="chip-total">${t.toFixed(1)}<span class="u">ms</span><span class="d ${over>0?'over':'under'}">${over>0?'+'+over.toFixed(1):over.toFixed(1)}</span></div>
+      <div class="chip-prov">${c.src==='pix'?'occupancy · limiter':'occupancy · SOL'}</div>
+      <div class="chip-act">${railAct(id)}</div>`;
+    host.appendChild(el);
+  });
+  const un=Object.entries(LIB).filter(([,c])=>!c.loaded);
+  const add=document.createElement('div'); add.className='addwrap';
+  add.innerHTML=`<button class="addchip" id="addBtn" style="height:100%;width:100%">＋ Add capture</button>
+    <div class="addlist" id="addList">${un.length?un.map(([id,c])=>`<button data-add="${id}">${c.file}<span>${c.src==='pix'?'PIX':'Nsight'} · ${total(c).toFixed(1)} ms</span></button>`).join(''):'<div class="none">All sample captures loaded</div>'}</div>`;
+  host.appendChild(add); wireRail();
+}
+function railAct(id){
+  if(mode==='single') return `<button class="cbtn" data-view="${id}" aria-pressed="${id===viewId}">${id===viewId?'Viewing':'View'}</button>`;
+  return `<button class="cbtn" data-base="${id}" aria-pressed="${id===baseId}">Base</button><button class="cbtn" data-cmp="${id}" aria-pressed="${id===cmpId}">Compare</button>`;
+}
+function wireRail(){
+  document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>{viewId=b.dataset.view; render();});
+  document.querySelectorAll('[data-base]').forEach(b=>b.onclick=()=>{const id=b.dataset.base; if(id===cmpId)cmpId=baseId; baseId=id; render();});
+  document.querySelectorAll('[data-cmp]').forEach(b=>b.onclick=()=>{const id=b.dataset.cmp; if(id===baseId)baseId=cmpId; cmpId=id; render();});
+  document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>closeCap(b.dataset.close));
+  document.querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>{LIB[b.dataset.add].loaded=true; render();});
+  const ab=document.getElementById('addBtn'), al=document.getElementById('addList');
+  if(ab) ab.onclick=e=>{e.stopPropagation(); al.classList.toggle('open');};
+}
+document.addEventListener('click',()=>{const al=document.getElementById('addList'); if(al) al.classList.remove('open');});
+function closeCap(id){LIB[id].loaded=false; const ld=Object.keys(LIB).filter(k=>LIB[k].loaded);
+  if(viewId===id)viewId=ld[0]||null; if(baseId===id)baseId=ld.find(k=>k!==cmpId)||null; if(cmpId===id)cmpId=ld.find(k=>k!==baseId)||null; render();}
+document.querySelectorAll('.mode button').forEach(b=>b.onclick=()=>{
+  mode=b.dataset.mode; document.querySelectorAll('.mode button').forEach(x=>x.setAttribute('aria-pressed',x.dataset.mode===mode));
+  const ld=Object.keys(LIB).filter(k=>LIB[k].loaded);
+  if(mode==='compare'){if(!baseId||!LIB[baseId]?.loaded)baseId=ld[0]; if(!cmpId||cmpId===baseId||!LIB[cmpId]?.loaded)cmpId=ld.find(k=>k!==baseId);}
+  render();
+});
+
+function render(){
+  renderRail();
+  const main=document.getElementById('main'); const ld=Object.keys(LIB).filter(k=>LIB[k].loaded);
+  if(!ld.length){main.innerHTML=`<div class="empty"><div class="b">No captures open</div>Add a PIX capture or Nsight trace to begin.</div>`; return;}
+  if(mode==='single'){if(!viewId||!LIB[viewId].loaded)viewId=ld[0]; renderSingle(LIB[viewId]);}
+  else renderCompare();
+}
+
+/* single */
+function renderSingle(c){
+  const t=total(c), over=t-BUDGET, prov=PROVIDES[c.src];
+  const sorted=[...c.p].sort((a,b)=>b.dur-a.dur), worst=sorted[0];
+  const byCat={}; c.p.forEach(p=>byCat[p.cat]=(byCat[p.cat]||0)+p.dur);
+  const dom=Object.entries(byCat).sort((a,b)=>b[1]-a[1])[0]; const domN=c.p.filter(p=>p.cat===dom[0]).length;
+  document.getElementById('main').innerHTML=`
+    <div class="vhead"><span class="file">${c.file}</span><span class="sub">${c.src==='pix'?'PIX GPU Capture':'Nsight GPU Trace'} · frame ${c.frame} · ${c.src==='pix'?'occupancy + limiter':'occupancy + SOL'}</span></div>
+    <section class="hero">
+      <div class="hero-row">
+        <div><div class="lbl">Frame GPU time</div>
+          <div class="ftime"><span class="n">${t.toFixed(1)}<span class="u"> ms</span></span>
+          <span class="delta-pill ${over>0?'over':'under'}">${over>0?'over budget +'+over.toFixed(1)+' ms':'under budget '+over.toFixed(1)+' ms'}</span></div>
+        </div>
+        <div class="hero-right">target <b>16.6 ms</b> · 60 fps<br>${c.p.length} passes · graphics + async compute</div>
+      </div>
+      <div class="tl-hero">${bar(c,t)}${ruler()}</div>
+      <div class="legend">${legend(c)}</div>
+    </section>
+    <div class="cluster">
+      <div class="ro"><div class="k">Dominant limiter</div><div class="v"><span class="dot" style="background:${CATS[dom[0]].color}"></span>${CATS[dom[0]].label}</div><div class="s">${dom[1].toFixed(1)} ms · ${domN} pass${domN>1?'es':''}</div></div>
+      <div class="ro"><div class="k">Worst pass</div><div class="v">${worst.name}</div><div class="s">${worst.dur.toFixed(1)} ms · ${(worst.dur/t*100).toFixed(0)}% of frame</div></div>
+      <div class="ro"><div class="k">Async overlap</div><div class="v">${c.async}%</div><div class="s">particle sim ∥ graphics</div></div>
+      <div class="ro"><div class="k">Queue sync gaps</div><div class="v">${c.sync} ms</div><div class="s">GPU idle between handoffs</div></div>
+    </div>
+    <section>
+      <div class="sh">
+        <h2>Pass detail</h2>
+        <div class="subtoggle" role="group" aria-label="View">
+          <button data-sv="breakdown" aria-pressed="${svc==='breakdown'}">Breakdown</button>
+          <button data-sv="timeline" aria-pressed="${svc==='timeline'}">Timeline</button>
+        </div>
+      </div>
+      <div id="detail"></div>
+    </section>`;
+  document.querySelectorAll('[data-sv]').forEach(b=>b.onclick=()=>{svc=b.dataset.sv; renderSingle(c);});
+  if(svc==='breakdown') renderBreakdown(c,t,prov,sorted); else renderTimeline(c);
+  grow();
+}
+function renderBreakdown(c,t,prov,sorted){
+  const host=document.getElementById('detail');
+  const tbl=document.createElement('div'); tbl.className='tbl';
+  sorted.forEach(p=>{
+    const cat=CATS[p.cat], pct=p.dur/t*100; const occ=(prov.occ&&p.occ!=null)?p.occ+'%':'—';
+    const row=document.createElement('div'); row.className='trow'; row.tabIndex=0; row.setAttribute('role','button');
+    row.innerHTML=`<span class="tick4" style="background:${cat.color}"></span>
+      <div class="pn">${p.name}<span class="ev">event #${p.event}</span></div>
+      <div class="prop"><div class="ptrack"><div class="pfill" style="width:${pct}%;background:${cat.color}"></div></div><span class="ppct">${pct.toFixed(0)}%</span></div>
+      <div class="dur">${p.dur.toFixed(1)}<span class="u"> ms</span></div>
+      <div class="occ ${occ==='—'?'na':''}">${occ}</div>
+      <div class="chev">▶</div>`;
+    const dr=document.createElement('div'); dr.className='drawer'; dr.innerHTML=drawer(c,p,cat,pct);
+    row.onclick=()=>{const was=row.classList.contains('open'); tbl.querySelectorAll('.trow.open').forEach(r=>r.classList.remove('open')); if(!was)row.classList.add('open');};
+    row.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault(); row.click();}};
+    tbl.appendChild(row); tbl.appendChild(dr);
+  });
+  host.appendChild(tbl);
+}
+function drawer(c,p,cat,pct){
+  const prov=PROVIDES[c.src];
+  const occ=(prov.occ&&p.occ!=null)?p.occ+'%':'<span class="na">—</span>';
+  const lim=(prov.limiter&&p.limiter)?p.limiter:'<span class="na">—</span>';
+  const sol=(prov.sol&&p.sol)?p.sol:'<span class="na">—</span>';
+  const note=c.src==='pix'?'PIX capture — SOL unit not recorded':'Nsight trace — occupancy limiter not recorded';
+  return `<div class="din" style="--dc:${cat.color}">
+    <div class="metrics">
+      <div class="m"><div class="k">Duration</div><div class="v">${p.dur.toFixed(1)} ms<small>${pct.toFixed(1)}% of frame</small></div></div>
+      <div class="m"><div class="k">Limited by</div><div class="v" style="color:${cat.color}">${cat.label}<small>${cat.why}</small></div></div>
+      <div class="m"><div class="k">Occupancy</div><div class="v">${occ}<small>limiter: ${lim}</small></div></div>
+      <div class="m"><div class="k">Speed-of-light</div><div class="v">${sol}<small>busiest hardware unit</small></div></div>
+    </div>
+    <div class="prov">From <b>${c.file}</b> (${c.src==='pix'?'PIX GPU Capture':'Nsight GPU Trace'}) — ${note}.</div>
+    <div class="dact"><button class="btn pri">Open event #${p.event} in PIX ↗</button><button class="btn">Copy event id</button></div>
+  </div>`;
+}
+
+/* timeline (flame chart with nested markers + async lane) */
+function buildTL(c){
+  const items=[]; let t=0, maxDepth=0;
+  const lay=(kids,pstart,pdur,depth,cat)=>{
+    let s=pstart; maxDepth=Math.max(maxDepth,depth);
+    kids.forEach(k=>{const d=pdur*k[1];
+      items.push({name:k[0],start:s,dur:d,depth,cat,q:'gfx'});
+      if(k[2]) lay(k[2],s,d,depth+1,cat); s+=d;});
+  };
+  c.p.forEach(p=>{items.push({name:p.name,start:t,dur:p.dur,depth:0,cat:p.cat,q:'gfx',event:p.event});
+    if(NEST[p.name]) lay(NEST[p.name],t,p.dur,1,p.cat); t+=p.dur;});
+  const aDur=Math.min(c.p.slice(0,2).reduce((s,x)=>s+x.dur,0)+1.0, TRACK-0.3);
+  items.push({name:'ParticleSim',start:0.3,dur:aDur,depth:0,cat:'compute',q:'async'});
+  return {items,maxDepth};
+}
+function renderTimeline(c){
+  const {items,maxDepth}=buildTL(c);
+  const rowH=30, gfxRows=maxDepth+1, gfxH=gfxRows*rowH, asyncH=rowH+8;
+  const pctX=v=>v/TRACK*100;
+  const grid=[0,5,10,15,20].map(v=>`<div class="tl-grid" style="left:${pctX(v)}%"></div>`).join('');
+  const spanHTML=it=>{
+    const l=pctX(it.start), w=Math.max(pctX(it.dur),0.5);
+    const bg=it.depth===0?CATS[it.cat].color:tint(CATS[it.cat].color, it.depth===1?.55:.72);
+    const col=it.depth===0?'#fff':'#1b1e23';
+    const top=it.q==='gfx'?it.depth*rowH+2:2;
+    const show=pctX(it.dur)>5;
+    const tt=`${it.name} · ${it.dur.toFixed(2)} ms · ${it.start.toFixed(1)}–${(it.start+it.dur).toFixed(1)} ms`;
+    return `<div class="tspan" style="left:${l}%;width:${w}%;top:${top}px;background:${bg};color:${col};border:1px solid rgba(21,24,29,${it.depth?.14:0})" title="${tt}">
+      ${show?it.name:''}<div class="tip">${it.name} · <span class="s">${it.dur.toFixed(2)} ms</span></div></div>`;
+  };
+  const gfx=items.filter(i=>i.q==='gfx').map(spanHTML).join('');
+  const asy=items.filter(i=>i.q==='async').map(spanHTML).join('');
+  document.getElementById('detail').innerHTML=`
+    <div class="tlview">
+      <div class="tl-ruler-wrap"><div class="tl-gutwidth"></div><div class="tl-ruler">${tlTicks()}</div></div>
+      <div class="tl-body">
+        <div class="tl-gutter">
+          <div class="gl" style="height:${gfxH}px"><b>Graphics</b><small>queue</small></div>
+          <div class="gl" style="height:${asyncH}px"><b>Async</b><small>compute</small></div>
+        </div>
+        <div class="tl-plot">
+          ${grid}
+          <div class="tl-band gfx" style="height:${gfxH}px">${gfx}</div>
+          <div class="tl-band async" style="height:${asyncH}px">${asy}</div>
+          <div class="tl-budget" style="left:${pctX(BUDGET)}%"></div>
+        </div>
+      </div>
+      <div class="tl-note"><span><b>Rows</b> = marker nesting depth (parent → children)</span><span><b>Async lane</b> shows compute overlapping graphics</span><span>hover a bar for exact timing</span></div>
+    </div>`;
+}
+function tlTicks(){
+  let t=''; [0,5,10,15,20].forEach(v=>{t+=`<div class="rtick" style="left:${v/TRACK*100}%">${v}</div>`;});
+  t+=`<div class="rtick bud" style="left:${BUDGET/TRACK*100}%">16.6</div>`; return t;
+}
+
+/* compare */
+function renderCompare(){
+  const base=LIB[baseId], cmp=LIB[cmpId];
+  if(!base||!cmp){document.getElementById('main').innerHTML=`<div class="empty"><div class="b">Pick a base and a compare</div>Use the Base and Compare buttons on two captures above.</div>`; return;}
+  const tb=total(base), tc=total(cmp), d=tc-tb, dCls=d<-.05?'neg':d>.05?'pos':''; const bo=tb-BUDGET, co=tc-BUDGET;
+  const names=[...new Set([...base.p.map(p=>p.name),...cmp.p.map(p=>p.name)])];
+  const rows=names.map(n=>{const pb=base.p.find(x=>x.name===n),pc=cmp.p.find(x=>x.name===n);
+    const vb=pb?pb.dur:null,vc=pc?pc.dur:null,dd=(vb!=null&&vc!=null)?vc-vb:null;
+    return{n,vb,vc,dd,cat:(pc||pb).cat,status:!pb?'new':!pc?'gone':''};}).sort((a,b)=>Math.abs(b.dd??0)-Math.abs(a.dd??0));
+  const maxAbs=Math.max(...rows.map(r=>Math.abs(r.dd??0)),.1); const same=base.src===cmp.src, big=rows.find(r=>r.dd!=null);
+  document.getElementById('main').innerHTML=`
+    <div class="cmpb">
+      <div class="side"><span class="rt base">BASE</span><span><span class="fn">${base.file}</span> <span class="fs">${base.src==='pix'?'PIX':'Nsight'} · ${tb.toFixed(1)} ms</span></span></div>
+      <span class="arrow">→</span>
+      <div class="side"><span class="rt compare">COMPARE</span><span><span class="fn">${cmp.file}</span> <span class="fs">${cmp.src==='pix'?'PIX':'Nsight'} · ${tc.toFixed(1)} ms</span></span></div>
+      <button class="swap" id="swapBtn">⇄ swap</button>
+      <div class="conv">Δ = compare − base<br><span class="g">▼ faster</span> · <span class="r">▲ slower</span></div>
+    </div>
+    <div class="cluster">
+      <div class="ro"><div class="k">Frame time · base → compare</div><div class="v">${tb.toFixed(1)} → ${tc.toFixed(1)} ms</div><div class="s">base ${bo>0?'over +'+bo.toFixed(1):'under '+bo.toFixed(1)} → compare ${co>0?'over +'+co.toFixed(1):'under '+co.toFixed(1)}</div></div>
+      <div class="ro"><div class="k">Net change</div><div class="v ${dCls}">${d>0?'+':''}${d.toFixed(1)} ms</div><div class="s">${d<0?'compare is faster':d>0?'compare is slower':'no net change'}${co<=0&&bo>0?' · now within budget':''}</div></div>
+      <div class="ro"><div class="k">Biggest mover</div><div class="v">${big?big.n:'—'}</div><div class="s">${big?(big.dd>0?'+':'')+big.dd.toFixed(1)+' ms':''}</div></div>
+    </div>
+    <section>
+      <div class="sh"><h2>Frame budget</h2><span class="hint">same scale · base above, compare below</span></div>
+      <div class="tl-hero">
+        <div class="barside"><span class="rt base">BASE</span> ${base.file} · <b>${tb.toFixed(1)} ms</b></div>${bar(base,tb,'dual')}
+        <div class="barside" style="margin-top:14px"><span class="rt compare">COMPARE</span> ${cmp.file} · <b>${tc.toFixed(1)} ms</b></div>${bar(cmp,tc,'dual')}${ruler()}
+      </div>
+    </section>
+    <section>
+      <div class="sh"><h2>Per-pass change</h2><span class="hint">sorted by size of change · base is the reference</span></div>
+      <div class="ctbl" id="ctbl"><div class="ctrow hd"><div></div><div>Pass</div><div style="text-align:right">Base</div><div style="text-align:right">Compare</div><div style="text-align:right">Δ ms</div><div>&nbsp;&nbsp;change</div></div></div>
+      <div class="cnote">${same?'Both captures are '+(base.src==='pix'?'PIX':'Nsight')+' — durations, occupancy'+(base.src==='pix'?' and limiter':' and SOL')+' are directly comparable.':'Cross-tool compare ('+base.src.toUpperCase()+' vs '+cmp.src.toUpperCase()+') — duration and occupancy are comparable; limiter and SOL are tool-specific and shown per file in single view, not diffed here.'}</div>
+    </section>`;
+  document.getElementById('swapBtn').onclick=()=>{const t=baseId; baseId=cmpId; cmpId=t; render();};
+  const ct=document.getElementById('ctbl');
+  rows.forEach(r=>{const cat=CATS[r.cat], dc=r.dd==null?'zero':r.dd<-.05?'good':r.dd>.05?'bad':'zero';
+    const dt=r.dd==null?'—':(r.dd>0?'+':'')+r.dd.toFixed(1); const w=r.dd==null?0:Math.abs(r.dd)/maxAbs*50;
+    let f=''; if(r.dd!=null&&Math.abs(r.dd)>.05) f=r.dd>0?`<div class="fill bad" style="width:${w}%"></div>`:`<div class="fill good" style="width:${w}%"></div>`;
+    const np=r.status==='new'?'<span class="np new">NEW</span>':r.status==='gone'?'<span class="np gone">GONE</span>':'';
+    const row=document.createElement('div'); row.className='ctrow';
+    row.innerHTML=`<span class="tick4" style="background:${cat.color}"></span><div class="cpn">${r.n}${np}</div>
+      <div class="cb">${r.vb!=null?r.vb.toFixed(1):'—'}</div><div class="cc">${r.vc!=null?r.vc.toFixed(1):'—'}</div>
+      <div class="cd ${dc}">${dt}</div><div class="dbar"><div class="mid"></div>${f}</div>`;
+    ct.appendChild(row);
+  });
+}
+
+/* shared */
+function bar(c,t,cls){
+  let segs=''; c.p.forEach(p=>{const w=p.dur/TRACK*100, cat=CATS[p.cat];
+    segs+=`<div class="seg" data-w="${w}" style="width:0%;background:${cat.color}"><div class="tip">${p.name} · <span class="s">${p.dur.toFixed(1)} ms · ${(p.dur/t*100).toFixed(0)}%</span></div></div>`;});
+  const ow=Math.max(0,(t-BUDGET)/TRACK*100);
+  return `<div class="bar ${cls||''}">${segs}<div class="over-hatch" style="left:${BUDGET/TRACK*100}%;width:${ow}%"></div><div class="budget" style="left:${BUDGET/TRACK*100}%"></div></div>`;
+}
+function ruler(){let t=''; [0,5,10,15,20].forEach(v=>{t+=`<span class="rtick" style="left:${v/TRACK*100}%">${v}</span>`;});
+  t+=`<span class="rtick bud" style="left:${BUDGET/TRACK*100}%">16.6</span>`; return `<div class="ruler">${t}</div>`;}
+function legend(c){const u=[...new Set(c.p.map(p=>p.cat))];
+  return u.map(k=>`<span class="lg"><i style="background:${CATS[k].color}"></i>${CATS[k].label}</span>`).join('');}
+function grow(){if(reduce){document.querySelectorAll('.seg').forEach(s=>s.style.width=s.dataset.w+'%'); return;}
+  requestAnimationFrame(()=>document.querySelectorAll('.seg').forEach(s=>s.style.width=s.dataset.w+'%'));}
+render();
+</script>
+</body>
+</html>
