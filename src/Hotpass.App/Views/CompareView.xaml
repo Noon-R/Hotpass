@@ -139,15 +139,28 @@
                     <ItemsControl ItemsSource="{Binding Compare.Rows}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Border BorderThickness="0,0,0,1">
+                                <StackPanel>
+                                <Border BorderThickness="0,0,0,1" MouseLeftButtonUp="Row_Click">
                                     <Border.Style>
                                         <Style TargetType="Border">
                                             <Setter Property="BorderBrush" Value="{StaticResource HairBrush}"/>
+                                            <Setter Property="Background" Value="Transparent"/>
                                             <Style.Triggers>
                                                 <!-- ネスト行は罫線を消して親の塊として見せる -->
                                                 <DataTrigger Binding="{Binding IsNested}" Value="True">
                                                     <Setter Property="BorderBrush" Value="Transparent"/>
                                                 </DataTrigger>
+                                                <!-- 画像を持つ行だけクリック可能に見せる -->
+                                                <DataTrigger Binding="{Binding HasImages}" Value="True">
+                                                    <Setter Property="Cursor" Value="Hand"/>
+                                                </DataTrigger>
+                                                <MultiDataTrigger>
+                                                    <MultiDataTrigger.Conditions>
+                                                        <Condition Binding="{Binding HasImages}" Value="True"/>
+                                                        <Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource Self}}" Value="True"/>
+                                                    </MultiDataTrigger.Conditions>
+                                                    <Setter Property="Background" Value="{StaticResource RaiseBrush}"/>
+                                                </MultiDataTrigger>
                                             </Style.Triggers>
                                         </Style>
                                     </Border.Style>
@@ -209,6 +222,10 @@
                                                     Visibility="{Binding IsGone, Converter={StaticResource BoolToVis}}">
                                                 <TextBlock Text="GONE" FontSize="9" FontWeight="Bold" Foreground="{StaticResource MutedBrush}"/>
                                             </Border>
+                                            <Border Background="{StaticResource RaiseBrush}" Padding="6,2" Margin="8,0,0,0"
+                                                    Visibility="{Binding HasImages, Converter={StaticResource BoolToVis}}">
+                                                <TextBlock Text="{Binding ImageCountText}" FontSize="9" FontWeight="Bold" Foreground="{StaticResource MutedBrush}"/>
+                                            </Border>
                                         </StackPanel>
                                         <TextBlock Grid.Column="2" Text="{Binding BaseText}" VerticalAlignment="Center" TextAlignment="Right"
                                                    Style="{StaticResource NumText}" FontSize="14" Foreground="{StaticResource MutedBrush}"/>
@@ -246,6 +263,70 @@
                                         </Grid>
                                     </Grid>
                                 </Border>
+
+                                <!-- 画像ドロワー: base / compare の抽出画像を並べて見せる -->
+                                <Border Background="{StaticResource RaiseBrush}" BorderBrush="{Binding CatBrush}" BorderThickness="4,0,0,0"
+                                        Visibility="{Binding IsExpanded, Converter={StaticResource BoolToVis}}" Padding="22,16,22,8">
+                                    <UniformGrid Columns="2">
+                                        <StackPanel Margin="0,0,18,0">
+                                            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                                                <Border Style="{StaticResource RoleTag}" Background="{StaticResource InkBrush}">
+                                                    <TextBlock Text="BASE" Style="{StaticResource RoleTagText}" Foreground="#15181D"/>
+                                                </Border>
+                                            </StackPanel>
+                                            <ItemsControl ItemsSource="{Binding BasePass.Images}">
+                                                <ItemsControl.ItemsPanel>
+                                                    <ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate>
+                                                </ItemsControl.ItemsPanel>
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <Border BorderBrush="{StaticResource Hair2Brush}" BorderThickness="1"
+                                                                Margin="0,0,10,10" Padding="3" Background="{StaticResource SurfaceBrush}"
+                                                                Cursor="Hand" MouseLeftButtonUp="Thumbnail_Click" Tag="{Binding PngPath}">
+                                                            <StackPanel>
+                                                                <Image Source="{Binding PngPath}" Height="96" Stretch="Uniform"/>
+                                                                <TextBlock Text="{Binding ResourceName}" FontSize="10.5" Foreground="{StaticResource MutedBrush}"
+                                                                           Margin="2,3,2,1" MaxWidth="170" TextTrimming="CharacterEllipsis"/>
+                                                            </StackPanel>
+                                                        </Border>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                            <TextBlock Text="no extracted image — extract in single view" Style="{StaticResource LabelText}"
+                                                       FontSize="11.5" Margin="0,0,0,10"
+                                                       Visibility="{Binding BaseHasImages, Converter={StaticResource BoolToVis}, ConverterParameter=invert}"/>
+                                        </StackPanel>
+                                        <StackPanel>
+                                            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                                                <Border Style="{StaticResource RoleTag}" Background="{StaticResource AccentBrush}">
+                                                    <TextBlock Text="COMPARE" Style="{StaticResource RoleTagText}" Foreground="#0D1523"/>
+                                                </Border>
+                                            </StackPanel>
+                                            <ItemsControl ItemsSource="{Binding ComparePass.Images}">
+                                                <ItemsControl.ItemsPanel>
+                                                    <ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate>
+                                                </ItemsControl.ItemsPanel>
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <Border BorderBrush="{StaticResource Hair2Brush}" BorderThickness="1"
+                                                                Margin="0,0,10,10" Padding="3" Background="{StaticResource SurfaceBrush}"
+                                                                Cursor="Hand" MouseLeftButtonUp="Thumbnail_Click" Tag="{Binding PngPath}">
+                                                            <StackPanel>
+                                                                <Image Source="{Binding PngPath}" Height="96" Stretch="Uniform"/>
+                                                                <TextBlock Text="{Binding ResourceName}" FontSize="10.5" Foreground="{StaticResource MutedBrush}"
+                                                                           Margin="2,3,2,1" MaxWidth="170" TextTrimming="CharacterEllipsis"/>
+                                                            </StackPanel>
+                                                        </Border>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                            <TextBlock Text="no extracted image — extract in single view" Style="{StaticResource LabelText}"
+                                                       FontSize="11.5" Margin="0,0,0,10"
+                                                       Visibility="{Binding CompareHasImages, Converter={StaticResource BoolToVis}, ConverterParameter=invert}"/>
+                                        </StackPanel>
+                                    </UniformGrid>
+                                </Border>
+                                </StackPanel>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>

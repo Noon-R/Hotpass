@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Media;
+using CommunityToolkit.Mvvm.ComponentModel;
 using Hotpass.Core.Model;
 
 namespace Hotpass.App.ViewModels;
@@ -7,7 +8,7 @@ namespace Hotpass.App.ViewModels;
 public enum DeltaState { Good, Bad, Zero }
 
 /// <summary>Per-pass change の 1 行。Δ = compare − base(緑▼=速い、赤▲=遅い)。ネスト行は Depth &gt; 0。</summary>
-public sealed class CompareRow
+public sealed partial class CompareRow : ObservableObject
 {
     public required string Name { get; init; }
     public double? BaseMs { get; init; }
@@ -16,6 +17,18 @@ public sealed class CompareRow
     public required Brush CatBrush { get; init; }
     public bool IsNew { get; init; }
     public bool IsGone { get; init; }
+
+    /// <summary>抽出済み画像の参照元(トップレベル行のみ。画像はパス行単位で保持される)。</summary>
+    public PassRowViewModel? BasePass { get; init; }
+    public PassRowViewModel? ComparePass { get; init; }
+
+    [ObservableProperty]
+    private bool _isExpanded;
+
+    public bool BaseHasImages => BasePass?.Images.Count > 0;
+    public bool CompareHasImages => ComparePass?.Images.Count > 0;
+    public bool HasImages => BaseHasImages || CompareHasImages;
+    public string ImageCountText => $"IMG ×{(BasePass?.Images.Count ?? 0) + (ComparePass?.Images.Count ?? 0)}";
 
     /// <summary>マーカーのネスト深さ(トップレベル = 0)。</summary>
     public int Depth { get; init; }
@@ -118,6 +131,9 @@ public sealed class CompareState
                         : new SolidColorBrush(CategoryMeta.Tint(CategoryMeta.For(node.Cat).Color, d)),
                     IsNew = nb is null,
                     IsGone = nc is null,
+                    // 画像はトップレベルのパス行にのみ紐付く(Single ビューで抽出したものを共有)
+                    BasePass = d == 0 && nb is not null ? baseCap.Rows.FirstOrDefault(r => r.Name == node.Name) : null,
+                    ComparePass = d == 0 && nc is not null ? cmpCap.Rows.FirstOrDefault(r => r.Name == node.Name) : null,
                     Depth = d,
                     SiblingCount = Math.Max(nb?.Count ?? 0, nc?.Count ?? 0),
                     BarFraction = delta is { } dd ? Math.Abs(dd) / maxAbs : 0,
