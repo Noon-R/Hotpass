@@ -27,11 +27,12 @@ public sealed class PixCaptureImporter
         Directory.CreateDirectory(workDir);
         var csvPath = Path.Combine(workDir, "events.csv");
 
+        // 時間カウンタ(TOP to EOP Duration / Execution Start Time 等)を含めて出力する。
+        // パターンが未対応のバージョン向けに素の一覧へフォールバック。
         var result = await _runner.RunAsync(
-            ["open-capture", wpixPath, "save-event-list", csvPath, "--counter-groups=D3D*"], ct);
+            ["open-capture", wpixPath, "save-event-list", csvPath, "--counters=*Duration*", "--counters=*Start*"], ct);
         if (!result.Success || !File.Exists(csvPath))
         {
-            // counter-groups が未対応/失敗の場合は素の一覧で再試行
             result = await _runner.RunAsync(["open-capture", wpixPath, "save-event-list", csvPath], ct);
             if (!result.Success || !File.Exists(csvPath))
                 throw new InvalidOperationException(
@@ -70,44 +71,109 @@ public sealed class PixCaptureImporter
         => wpixPath + ".hotpass";
 
     /// <summary>
-    /// イベント行 → PassRecord。Depth 列があれば階層をそのまま採用し、親子は走査で復元する。
-    /// StartNs が無い場合はトップレベルを順に積み上げる。
+    /// イベント行 → PassRecord。
+    /// 階層は Parent 列(親の連番 ID)から復元する。マーカー(PIXBeginEvent)は自身の
+    /// duration を持たないため、配下 GPU 操作の合計/範囲を集計して 1 パスにする。
+    /// 残すのは「子を持つ行(=マーカー)」と「duration &gt; 0 の GPU 操作」のみ
+    /// (SetXxx 等の状態設定コールはトリアージ対象外)。
     /// </summary>
     internal static List<PassRecord> BuildPasses(IReadOnlyList<EventRow> rows)
     {
-        var passes = new List<PassRecord>();
-        var stack = new Stack<PassRecord>();   // 深さ順の祖先
-        double cursorNs = 0;
-        long nextId = 1;
-
-        foreach (var row in rows)
+        var childrenOf = new Dictionary<long, List<EventRow>>();
+        var roots = new List<EventRow>();
+        var byId = rows.ToDictionary(r => r.RowId);
+        foreach (var r in rows)
         {
-            // duration の無い行(状態設定 API コール等)はトリアージ対象外
-            if (row.DurationNs is not { } dur || dur <= 0) continue;
+            if (r.ParentRowId is { } p && byId.ContainsKey(p))
+            {
+                if (!childrenOf.TryGetValue(p, out var list)) childrenOf[p] = list = [];
+                list.Add(r);
+            }
+            else
+            {
+                roots.Add(r);
+            }
+        }
 
-            while (stack.Count > row.Depth) stack.Pop();
-            var parent = stack.Count > 0 ? stack.Peek() : null;
+        var passes = new List<PassRecord>();
+        long nextId = 1;
+        double cursorNs = 0; // start が取れないキャプチャ用の積み上げカーソル(トップレベルのみ)
 
-            var start = row.StartNs ?? (parent?.StartNs ?? (long)cursorNs);
-            var p = new PassRecord
+        void Walk(EventRow row, PassRecord? parent, int depth)
+        {
+            var kids = childrenOf.TryGetValue(row.RowId, out var list) ? list : null;
+            var isMarker = kids is { Count: > 0 };
+            var ownDur = row.DurationNs ?? 0;
+            if (!isMarker && ownDur <= 0) return;
+
+            double start, dur;
+            if (isMarker)
+            {
+                if (ownDur > 0)
+                {
+                    // PIX がマーカー行に集計済みの時間を出している場合はそれを採用
+                    start = row.StartNs ?? parent?.StartNs ?? cursorNs;
+                    dur = ownDur;
+                }
+                else
+                {
+                    // 集計が無い場合は配下 GPU 操作から復元(start は最小、end は最大、無ければ合計)
+                    var agg = Aggregate(row);
+                    if (agg.TotalDur <= 0) return; // GPU 時間ゼロのマーカーは畳む
+                    start = agg.MinStart ?? parent?.StartNs ?? cursorNs;
+                    dur = agg.MinStart is not null && agg.MaxEnd is not null
+                        ? agg.MaxEnd.Value - agg.MinStart.Value
+                        : agg.TotalDur;
+                }
+            }
+            else
+            {
+                start = row.StartNs ?? parent?.StartNs ?? cursorNs;
+                dur = ownDur;
+            }
+
+            var pass = new PassRecord
             {
                 Id = nextId++,
                 Name = row.Name,
-                EventId = row.EventId,
+                EventId = row.RowId,                     // PIX UI の event # に対応
                 StartNs = (long)start,
                 EndNs = (long)(start + dur),
                 DurationNs = (long)dur,
-                Depth = row.Depth,
+                Depth = depth,
                 ParentId = parent?.Id,
-                Queue = GpuQueue.Graphics,               // キュー判別はカウンタ/キュー列対応後
+                Queue = GpuQueue.Graphics,               // キュー判別は複数キュー対応時に
                 Category = BottleneckCategory.Unknown,   // カウンタ判定は §7-5 で
             };
-            passes.Add(p);
-            stack.Push(p);
+            passes.Add(pass);
 
-            if (row.Depth == 0 && row.StartNs is null)
-                cursorNs += dur;
+            if (depth == 0 && row.StartNs is null) cursorNs += dur;
+
+            if (kids is not null)
+                foreach (var k in kids)
+                    Walk(k, pass, depth + 1);
         }
+
+        (double TotalDur, double? MinStart, double? MaxEnd) Aggregate(EventRow row)
+        {
+            double total = row.DurationNs ?? 0;
+            double? minStart = row.StartNs;
+            double? maxEnd = row.StartNs is { } s && row.DurationNs is { } d ? s + d : null;
+            if (childrenOf.TryGetValue(row.RowId, out var kids))
+            {
+                foreach (var k in kids)
+                {
+                    var a = Aggregate(k);
+                    total += a.TotalDur;
+                    if (a.MinStart is { } ms && (minStart is null || ms < minStart)) minStart = ms;
+                    if (a.MaxEnd is { } me && (maxEnd is null || me > maxEnd)) maxEnd = me;
+                }
+            }
+            return (total, minStart, maxEnd);
+        }
+
+        foreach (var r in roots)
+            Walk(r, null, 0);
         return passes;
     }
 }

@@ -13,7 +13,9 @@ public sealed class CaptureStore : IDisposable
 
     public CaptureStore(string dbPath)
     {
-        _conn = new SqliteConnection($"Data Source={dbPath}");
+        // Pooling=False: 既定の接続プールは Dispose 後もファイルハンドルを保持するため、
+        // 再インポート時の File.Delete(db) が IOException になる(実測)。都度クローズさせる。
+        _conn = new SqliteConnection($"Data Source={dbPath};Pooling=False");
         _conn.Open();
         CreateSchema();
     }
