@@ -34,9 +34,11 @@ dotnet run --project src/Hotpass.App   # アプリ起動
 - **取得不能なデータは nullable。UI では「—」表示**。ソースにより可用性が違う(PIX: occupancy+limiter、Nsight: occupancy+SOL)
 - 生カウンタは画面に出さない。派生値に丸めてから表示
 - `bottleneck_category` は 7 分類 enum: `raster / texture / memory / compute / geometry / sync / unknown`
-- カテゴリ色(全 UI で一貫。base/compare 役割色と衝突させない):
-  - raster `#2F6FE0` / texture `#8A4FD0` / memory `#E0492E` / compute `#C77F14` / geometry `#0E9E74` / sync `#767E8A` / unknown `#A9B0B8`
-- 数値はタブラー数字で桁揃え
+- **ビジュアルは「Instrument(計測器)」スキン(ユーザ選定・中密度)**: 角丸なし・影なし・ヘアライン・
+  アンバー `#EFA13C` は「予算線/選択/アクティブモード/COMPARE役割」だけの1点使い。定義は `src/Hotpass.App/Themes/Dark.xaml`
+- カテゴリ色(全 UI で一貫。アンバーと衝突しないよう調整済み):
+  - raster `#5B8DEF` / texture `#9D7BE0` / memory `#E14B4B` / compute `#C9A227` / geometry `#2FB98B` / sync `#7E8794` / unknown `#5E6672`
+- 数値はモノスペース(Cascadia Mono / Consolas)+タブラーで桁揃え。マイクロラベルは大文字表記
 - フレーム予算は 16.6 ms(60fps)
 - Compare の規約: **Δ = compare − base、緑▼=速い、赤▲=遅い**。クロスツール比較では limiter / SOL は diff しない
 
