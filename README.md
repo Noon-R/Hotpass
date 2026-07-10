@@ -10,7 +10,7 @@
 
 ## これは何をするツールか
 
-- **.wpix(PIX GPU Capture)を読み込み**、パスごとの GPU 時間・律速カテゴリ・占有率を可視化
+- **.wpix(PIX GPU Capture)と Nsight GPU Trace エクスポート CSV を読み込み**、パスごとの GPU 時間・律速カテゴリ・占有率(Nsight は SOL 最繁ユニットも)を可視化
 - **Single view**: 1キャプチャの内訳(予算バー・Breakdown 表・Timeline フレームグラフ)
 - **Compare view**: 2キャプチャの差分(Δ = compare − base、緑▼=速い/赤▲=遅い)を per-pass に表示
 - **画像抽出**: pixtool の `recapture-region` + `save-resource` でパス直後の RT / バックバッファを PNG 化し、Single / Compare 両方のドロワーで確認可能
@@ -35,6 +35,7 @@
 |---|---|
 | `src/Hotpass.Core` | 正規化スキーマ(パス単位モデル)・派生値計算・SQLite ストア。UI 非依存 |
 | `src/Hotpass.Adapters.Pix` | pixtool.exe 検出/実行、save-event-list CSV パース、画像抽出 |
+| `src/Hotpass.Adapters.Nsight` | Nsight Graphics GPU Trace エクスポート CSV のパース(外部ツール不要) |
 | `src/Hotpass.App` | WPF UI(キャプチャレール / Single / Compare / Timeline フレームグラフ) |
 | `tests/*` | 各プロジェクトのユニットテスト(アダプタはフィクスチャ CSV を使用) |
 
@@ -54,7 +55,13 @@ dotnet test                             # 全テスト
 dotnet run --project src/Hotpass.App    # アプリ起動
 ```
 
-起動直後はサンプルキャプチャ2件が開いた状態になります。実際の `.wpix` を開くには「Add capture」から選択するか、パスを引数で渡してください。
+起動直後はサンプルキャプチャ2件が開いた状態になります。実際の `.wpix` や Nsight GPU Trace のエクスポート CSV を開くには「Add capture」から選択するか、パスを引数で渡してください。
+
+### Nsight GPU Trace の取り込みかた
+
+1. Nsight Graphics の GPU Trace でフレームをキャプチャ
+2. 範囲/マーカー単位のメトリクス表を CSV にエクスポート(列構成はバージョン依存でよい — パーサは列名ベースで防御的に解決)
+3. その CSV を Hotpass で開く。`duration` は必須、`occupancy` / ユニット別 `Throughput`(SOL)列があれば律速カテゴリと SOL 表示に使われる
 
 ## ドメイン規約
 
@@ -68,5 +75,5 @@ dotnet run --project src/Hotpass.App    # アプリ起動
 
 ## スコープ外
 
-シェーダデバッグ / リソース中身閲覧 / Vulkan / Nsight 側の画像抽出。Nsight アダプタは未実装(スキーマは受け口あり)。
+シェーダデバッグ / リソース中身閲覧 / Vulkan / Nsight 側の画像抽出(pixtool 相当の CLI 口が無いため。画像レイヤーは PIX 主導)。
 

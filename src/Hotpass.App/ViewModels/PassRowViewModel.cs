@@ -46,7 +46,9 @@ public partial class PassRowViewModel : ObservableObject
         : $"From {_owner.FileName} (Nsight GPU Trace) — occupancy limiter not recorded.";
 
     public string OpenInPixText => $"Open event #{Pass.EventId} in PIX ↗";
-    public bool CanOpenInPix => _owner.SourceFilePath is not null && File.Exists(_owner.SourceFilePath);
+
+    /// <summary>PIX への導線は .wpix 由来のみ(Nsight CSV をシェルで開いても意味がない)。</summary>
+    public bool CanOpenInPix => _owner.IsPix && _owner.SourceFilePath is not null && File.Exists(_owner.SourceFilePath);
 
     /// <summary>画像抽出の実装はアダプタ側で注入(実 .wpix 由来のキャプチャのみ有効)。</summary>
     public static Func<PassRowViewModel, Task>? ExtractImageHandler { get; set; }

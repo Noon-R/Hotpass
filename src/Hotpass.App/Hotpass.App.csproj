@@ -3,6 +3,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Hotpass.Core\Hotpass.Core.csproj" />
     <ProjectReference Include="..\Hotpass.Adapters.Pix\Hotpass.Adapters.Pix.csproj" />
+    <ProjectReference Include="..\Hotpass.Adapters.Nsight\Hotpass.Adapters.Nsight.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -21,7 +21,19 @@ public partial class App : Application
             RenderOptions.ProcessRenderMode = RenderMode.SoftwareOnly;
 
         WirePixAdapter();
+        WireNsightAdapter();
         base.OnStartup(e);
+    }
+
+    /// <summary>Nsight GPU Trace エクスポート CSV の読込。外部ツール不要なので常時有効。</summary>
+    private static void WireNsightAdapter()
+    {
+        MainViewModel.NsightImporter = async csvPath =>
+        {
+            var importer = new Hotpass.Adapters.Nsight.NsightTraceImporter();
+            var result = await Task.Run(() => importer.Import(csvPath));
+            return new CaptureViewModel(result.Capture, result.Passes, csvPath);
+        };
     }
 
     /// <summary>pixtool が見つかる場合のみ、実 .wpix の読込と画像抽出を有効化する。</summary>

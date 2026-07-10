@@ -285,7 +285,7 @@
                                                             <Setter Property="HorizontalContentAlignment" Value="Left"/>
                                                         </Style>
                                                     </Button.Style>
-                                                    <TextBlock Text="Open .wpix file…" FontSize="13" Foreground="{StaticResource AccentBrush}"/>
+                                                    <TextBlock Text="Open capture file…" FontSize="13" Foreground="{StaticResource AccentBrush}"/>
                                                 </Button>
                                             </StackPanel>
                                         </Border>

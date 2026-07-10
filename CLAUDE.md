@@ -18,6 +18,7 @@
 |---|---|
 | `src/Hotpass.Core` | 正規化スキーマ(パス単位モデル)・派生値計算・SQLite ストア。UI 非依存 |
 | `src/Hotpass.Adapters.Pix` | pixtool.exe 検出/実行、save-event-list CSV パース、画像抽出(recapture-region + save-resource) |
+| `src/Hotpass.Adapters.Nsight` | Nsight Graphics GPU Trace エクスポート CSV のパース・SOL→カテゴリ判定(外部ツール不要) |
 | `src/Hotpass.App` | WPF UI(キャプチャレール / Single / Compare / Timeline フレームグラフ) |
 | `tests/*` | 上記のユニットテスト(アダプタはフィクスチャ CSV 使用) |
 
@@ -48,7 +49,10 @@ dotnet run --project src/Hotpass.App   # アプリ起動
 - 独自バイナリ(.wpix)は直接パースしない。公式の口(pixtool CLI の CSV / PNG)のみ使う
 - 画像抽出は 2 段構え: `recapture-region` で GID 範囲切り出し → `save-resource` で PNG(パス直後の状態を得るため)
 - CSV 列構成は PIX バージョン依存 → パーサは列名ベースで防御的に
+- Nsight Graphics: GUI から GPU Trace のメトリクス表を CSV エクスポートしたものを取り込む(pixtool 相当の CLI 自動取得口は無い)。
+  列名ベース防御的パース+時間単位はヘッダ表記(ns/us/ms)から換算。ユニット別 Throughput の最繁を SOL 表示と 7 分類にマップ。
+  フレーム全体を包む単一ルート行は畳んで子を昇格(`UnwrapFrameRoot`)
 
 ## スコープ外(design.md §6)
 
-シェーダデバッグ / リソース中身閲覧 / Vulkan / Nsight 側の画像抽出。Nsight アダプタは未実装(スキーマは受け口あり)。
+シェーダデバッグ / リソース中身閲覧 / Vulkan / Nsight 側の画像抽出(CLI 口が無い。画像レイヤーは PIX 主導)。

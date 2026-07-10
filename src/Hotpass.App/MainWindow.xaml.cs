@@ -12,12 +12,13 @@ public partial class MainWindow : Window
         var vm = new MainViewModel();
         DataContext = vm;
 
-        // コマンドライン引数の .wpix を起動時に読み込む
+        // コマンドライン引数のキャプチャファイル(.wpix / .csv)を起動時に読み込む
         Loaded += async (_, _) =>
         {
             foreach (var arg in Environment.GetCommandLineArgs().Skip(1))
-                if (arg.EndsWith(".wpix", StringComparison.OrdinalIgnoreCase) && File.Exists(arg))
-                    await vm.LoadWpixAsync(arg);
+                if ((arg.EndsWith(".wpix", StringComparison.OrdinalIgnoreCase) ||
+                     arg.EndsWith(".csv", StringComparison.OrdinalIgnoreCase)) && File.Exists(arg))
+                    await vm.LoadCaptureAsync(arg);
         };
 #if DEBUG
         Loaded += (_, _) => Console.WriteLine(

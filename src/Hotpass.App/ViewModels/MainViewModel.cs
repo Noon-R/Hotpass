@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -10,6 +11,18 @@ public partial class MainViewModel : ObservableObject
 {
     /// <summary>実 .wpix を開く実装(PIX アダプタ)。未接続なら null。</summary>
     public static Func<string, Task<CaptureViewModel>>? WpixImporter { get; set; }
+
+    /// <summary>Nsight GPU Trace エクスポート CSV を開く実装(Nsight アダプタ)。未接続なら null。</summary>
+    public static Func<string, Task<CaptureViewModel>>? NsightImporter { get; set; }
+
+    /// <summary>拡張子からインポータを選ぶ(.wpix → PIX、.csv → Nsight)。未対応/未接続は null。</summary>
+    private static Func<string, Task<CaptureViewModel>>? ImporterFor(string path)
+        => Path.GetExtension(path).ToLowerInvariant() switch
+        {
+            ".wpix" => WpixImporter,
+            ".csv" => NsightImporter,
+            _ => null,
+        };
 
     public ObservableCollection<CaptureViewModel> Open { get; } = [];
     public ObservableCollection<CaptureViewModel> Available { get; } = [];
@@ -138,14 +151,14 @@ public partial class MainViewModel : ObservableObject
         Refresh();
     }
 
-    /// <summary>起動引数などから .wpix を読み込む(ファイルダイアログを介さない経路)。</summary>
-    public async Task LoadWpixAsync(string path)
+    /// <summary>起動引数などからキャプチャファイルを読み込む(ファイルダイアログを介さない経路)。</summary>
+    public async Task LoadCaptureAsync(string path)
     {
-        if (WpixImporter is null) return;
+        if (ImporterFor(path) is not { } importer) return;
         IsBusy = true;
         try
         {
-            var cvm = await WpixImporter(path);
+            var cvm = await importer(path);
             Open.Add(cvm);
             Viewed = cvm;
             Refresh();
@@ -164,23 +177,29 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand]
     private async Task OpenFileAsync()
     {
-        if (WpixImporter is null)
-        {
-            MessageBox.Show("PIX アダプタが未接続です(サンプルキャプチャをご利用ください)。", "Hotpass",
-                MessageBoxButton.OK, MessageBoxImage.Information);
-            return;
-        }
         var dlg = new Microsoft.Win32.OpenFileDialog
         {
-            Filter = "PIX GPU Capture (*.wpix)|*.wpix|All files (*.*)|*.*",
+            Filter = "Supported captures (*.wpix;*.csv)|*.wpix;*.csv"
+                   + "|PIX GPU Capture (*.wpix)|*.wpix"
+                   + "|Nsight GPU Trace export (*.csv)|*.csv"
+                   + "|All files (*.*)|*.*",
             Title = "Add capture",
         };
         if (dlg.ShowDialog() != true) return;
 
+        if (ImporterFor(dlg.FileName) is not { } importer)
+        {
+            var why = Path.GetExtension(dlg.FileName).Equals(".wpix", StringComparison.OrdinalIgnoreCase)
+                ? "PIX アダプタが未接続です(pixtool.exe が見つかりません)。"
+                : "未対応のファイル形式です(.wpix / .csv のみ)。";
+            MessageBox.Show(why, "Hotpass", MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+
         IsBusy = true;
         try
         {
-            var cvm = await WpixImporter(dlg.FileName);
+            var cvm = await importer(dlg.FileName);
             Open.Add(cvm);
             Viewed = cvm;
             Refresh();
