@@ -1,0 +1,56 @@
+# タグ(v*)push で Windows ビルドを GitHub Releases に添付する。
+# 手動実行(workflow_dispatch)ではリリースを作らず Actions の artifact に上げるだけ。
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Test
+        run: dotnet test Hotpass.sln -c Release --nologo
+        # pixtool 実機依存のテストは SkippableFact で自動スキップされる
+
+      - name: Resolve version
+        id: ver
+        shell: pwsh
+        run: |
+          $version = if ($env:GITHUB_REF_TYPE -eq 'tag') { $env:GITHUB_REF_NAME.TrimStart('v') } else { '0.0.0-ci' }
+          "version=$version" >> $env:GITHUB_OUTPUT
+
+      - name: Publish (self-contained win-x64, single file)
+        shell: pwsh
+        run: |
+          dotnet publish src/Hotpass.App -c Release -r win-x64 --self-contained true `
+            -p:PublishSingleFile=true `
+            -p:IncludeNativeLibrariesForSelfExtract=true `
+            -p:Version=${{ steps.ver.outputs.version }} `
+            -o publish
+          Compress-Archive -Path publish/* -DestinationPath "Hotpass-${{ steps.ver.outputs.version }}-win-x64.zip"
+
+      - name: Create GitHub Release
+        if: github.ref_type == 'tag'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: Hotpass-*.zip
+          generate_release_notes: true
+
+      - name: Upload artifact (manual run)
+        if: github.ref_type != 'tag'
+        uses: actions/upload-artifact@v4
+        with:
+          name: Hotpass-win-x64
+          path: Hotpass-*.zip

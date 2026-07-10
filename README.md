@@ -41,7 +41,19 @@
 
 ## セットアップ
 
-### 前提
+### 配布ビルドを使う
+
+[Releases](https://github.com/Noon-R/Hotpass/releases) に self-contained の win-x64 ビルド(zip)があります。
+.NET のインストールは不要です。zip を展開して `Hotpass.App.exe` を実行してください。
+
+リリースの作成はタグ push で自動化されています(メンテナ向け):
+
+```bash
+git tag v0.2.0 && git push origin v0.2.0
+# → GitHub Actions がテスト → publish → zip を Release に添付
+```
+
+### ソースからビルドする場合の前提
 
 - Windows
 - .NET 10 SDK
